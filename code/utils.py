@@ -301,7 +301,7 @@ def get_example_params(target, nb_class=10, example_index=0):
 
     returns:
         original_images (numpy array) : Original images, shape = (number of class, W, H, C)
-        pre_images (numpy array) : Preprocessing images, shape = (number of class, C, W, H)
+        pre_images (torch array) : Preprocessing images, shape = (number of class, C, W, H)
         target_classes (dictionary) : keys = class index, values = class name
         model (pytorch model) : pretrained model
     '''
@@ -317,7 +317,7 @@ def get_example_params(target, nb_class=10, example_index=0):
     elif target == 'cifar10':
         in_channels = 3
         fcn_size = 128*4*4
-        image_size = (32,32,1)
+        image_size = (32,32,3)
 
         _, _, testloader = cifar10_load(1, 0.2, True)
         testset = testloader.dataset
@@ -335,13 +335,13 @@ def get_example_params(target, nb_class=10, example_index=0):
 
     # model load
     weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
-    model = SimpleCNN(in_channels, fcn_size)
+    model = SimpleCNN(target)
     model.load_state_dict(weights['model'])
 
     # image preprocessing
-    pre_images = np.zeros(original_images.shape).transpose(0,3,1,2)
+    pre_images = torch.zeros(original_images.shape)
+    pre_images = np.transpose(pre_images, (0,3,1,2))
     for i in range(len(original_images)):
-        pre_images[i] = testset.transform(original_images[i]).numpy()
-        
+        pre_images[i] = testset.transform(original_images[i])
 
     return original_images, pre_images, target_classes, model

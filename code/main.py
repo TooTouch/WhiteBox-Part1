@@ -57,22 +57,18 @@ def main(args):
     # Data Load
     print('=====Data Load=====')
     if target == 'mnist':
-        in_channels = 1
-        fcn_size = 128*3*3
         trainloader, validloader, testloader = mnist_load(batch_size=batch_size,
                                                           validation_rate=valid_rate,
                                                           shuffle=True)
                                     
     elif target == 'cifar10':
-        in_channels = 3
-        fcn_size = 128*4*4
         trainloader, validloader, testloader = cifar10_load(batch_size=batch_size,
                                                             validation_rate=valid_rate,
                                                             shuffle=True)
     
     print('=====Model Load=====')
     # Load model
-    net = SimpleCNN(in_channels, fcn_size).to(device)
+    net = SimpleCNN(target).to(device)
     print()
 
 

@@ -2,7 +2,6 @@ from functools import partial
 import numpy as np
 
 import torch
-from model import SimpleCNN
 
 class DeconvNet:
     def __init__(self, model, deconv_model):
@@ -25,7 +24,14 @@ class DeconvNet:
         for idx, layer in enumerate(self.model._modules.get('features')):
             layer.register_forward_hook(partial(hook, key=idx))
 
-    def generate_image(self, layer, max_activation):
+    def generate_image(self, pre_image, layer, max_activation):
+
+        # prediction
+        probs = self.model(pre_image).detach()
+        prob = probs.max().item()
+        pred = probs.argmax().item()
+        
+
         # feature size
         num_feat = self.model.feature_maps[layer].shape[1]
         new_feat_map = self.model.feature_maps[layer].clone()
@@ -69,4 +75,4 @@ class DeconvNet:
         new_img = (new_img - new_img.min()) / (new_img.max() - new_img.min()) * 255
         new_img = new_img.astype(np.uint8)
         
-        return new_img
+        return new_img, prob, pred

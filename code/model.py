@@ -4,8 +4,15 @@ import torch.nn as nn
 from collections import OrderedDict
 
 class SimpleCNN(nn.Module):
-    def __init__(self, in_channels, fcn_size):
+    def __init__(self, target):
         super(SimpleCNN, self).__init__()
+        
+        if target=='mnist':
+            in_channels = 1
+            fcn_size = 128*3*3
+        elif target=='cifar10':
+            in_channels = 3
+            fcn_size = 128*4*4
 
         self.feature_maps = OrderedDict()
         self.pool_locs = OrderedDict()
@@ -53,12 +60,12 @@ class SimpleCNN(nn.Module):
         return output
 
 
-class DeconvNet(nn.Module):
-    def __init__(self, target, in_channels, fcn_size):
-        super(DeconvNet, self).__init__()
+class SimpleCNNDeconv(nn.Module):
+    def __init__(self, target):
+        super(SimpleCNNDeconv, self).__init__()
 
         self.target = target
-        self.in_channels = in_channels
+        in_channels = 1 if self.target=='mnist' else 3
 
         self.features = nn.Sequential(
             # deconv1
@@ -77,7 +84,7 @@ class DeconvNet(nn.Module):
             nn.MaxUnpool2d(kernel_size=2, stride=2),
             nn.ReLU(),
             nn.BatchNorm2d(32),
-            nn.ConvTranspose2d(in_channels=32, out_channels=self.in_channels, kernel_size=3, padding=1)
+            nn.ConvTranspose2d(in_channels=32, out_channels=in_channels, kernel_size=3, padding=1)
         )
 
         self.conv2deconv_indices = {
@@ -92,7 +99,7 @@ class DeconvNet(nn.Module):
         # Load checkpoint
         weight = torch.load('../checkpoint/simple_cnn_{}.path'.format(self.target))['model']
 
-        model = SimpleCNN(self.in_channels, self.fcn_size)
+        model = SimpleCNN(self.target)
         model.load_state_dict(weight)
 
         for idx, layer in enumerate(model.features):
