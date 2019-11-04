@@ -110,4 +110,4 @@ venv.bak/
 *.pptx
 
 # dataset
-dataset
+dataset/
