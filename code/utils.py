@@ -1,4 +1,6 @@
 import torch
+from torch.autograd import Variable
+
 import random
 import os
 import numpy as np
@@ -307,16 +309,12 @@ def get_example_params(target, nb_class=10, example_index=0):
     '''
 
     if target == 'mnist':
-        in_channels = 1
-        fcn_size = 128*3*3
         image_size = (28,28,1)
         
         _, _, testloader = mnist_load(1, 0.2, True)
         testset = testloader.dataset
 
     elif target == 'cifar10':
-        in_channels = 3
-        fcn_size = 128*4*4
         image_size = (32,32,3)
 
         _, _, testloader = cifar10_load(1, 0.2, True)
@@ -343,5 +341,21 @@ def get_example_params(target, nb_class=10, example_index=0):
     pre_images = np.transpose(pre_images, (0,3,1,2))
     for i in range(len(original_images)):
         pre_images[i] = testset.transform(original_images[i])
+    pre_images = Variable(pre_images, requires_grad=True)
+    
 
     return original_images, pre_images, target_classes, model
+
+
+def rescale_image(image):
+    '''
+    MinMax scaling
+    '''
+    image = (image - image.min())/(image.max() - image.min())
+    image = image.transpose(1,2,0)
+
+    return image
+
+
+
+

@@ -16,6 +16,7 @@ class SimpleCNN(nn.Module):
 
         self.feature_maps = OrderedDict()
         self.pool_locs = OrderedDict()
+        self.gradients = OrderedDict()
 
         self.features = nn.Sequential(
             # layer1

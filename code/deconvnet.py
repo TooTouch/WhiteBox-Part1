@@ -24,14 +24,13 @@ class DeconvNet:
         for idx, layer in enumerate(self.model._modules.get('features')):
             layer.register_forward_hook(partial(hook, key=idx))
 
-    def generate_image(self, pre_image, layer, max_activation):
+    def generate_image(self, pre_img, layer, max_activation=False, target_class=None):
 
         # prediction
-        probs = self.model(pre_image).detach()
+        probs = self.model(pre_img).detach()
         prob = probs.max().item()
         pred = probs.argmax().item()
         
-
         # feature size
         num_feat = self.model.feature_maps[layer].shape[1]
         new_feat_map = self.model.feature_maps[layer].clone()
