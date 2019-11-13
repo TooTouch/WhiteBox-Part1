@@ -21,6 +21,3 @@ def generate_smooth_grad(pre_img, output_size, n, sigma, layer, model, target_cl
     smooth_grad = smooth_grad / n
 
     return smooth_grad, prob, pred
-
-
-        

@@ -343,7 +343,6 @@ def get_example_params(target, nb_class=10, example_index=0):
         pre_images[i] = testset.transform(original_images[i])
     pre_images = Variable(pre_images, requires_grad=True)
     
-
     return original_images, pre_images, target_classes, model
 
 
