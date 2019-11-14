@@ -19,18 +19,18 @@ torchvision == 0.4.0
 
 # Saliency Maps
 Attribution Methods 
-- Vanilla Backpropagation 
-- Input x Backpropagation
+- Vanilla Backpropagation (VBP)
+- Input x Backpropagation (IB)
 - DeconvNet [1]
-- Guided Backpropagation [2]
-- Integrated Backpropagation [3]
-- Grad-CAM [4]
-- Guided Grad-CAM [4]
+- Guided Backpropagation (GB) [2]
+- Integrated Gradients (IG) [3]
+- Grad-CAM (GC) [4]
+- Guided Grad-CAM (GB-GC) [4]
 
 Ensemble Methods
-- SmoothGrad [5]
-- SmoothGrad-Squared [6]
-- SmoothGrad-VAR [6]
+- SmoothGrad (SG) [5]
+- SmoothGrad-Squared (SG-SQ) [6]
+- SmoothGrad-VAR (SG-VAR) [6]
 
 # Evaluation Methods
 - Coherence
@@ -49,18 +49,19 @@ Architecture | MNIST | CIFAR-10
 <img src="https://github.com/bllfpc/WhiteBox/blob/master/images/models/simple_cnn_architecture.png" alt="simple_cnn_architecture" width="200"/> | ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/mnist_acc_loss_plot.png) | ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/cifar10_acc_loss_plot.png)
 
 # Results
-## Coherence - MNIST
+## Coherence
+**MNIST**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_mnist.jpg)
 
-## Coherence - CIFAR-10
+**CIFAR-10**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg)
 
-## Selectivity - MNIST
+## Selectivity
+**MNIST**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_mnist.jpg)
 
-## Selectivity - CIFAR-10
+**CIFAR-10**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_cifar10.jpg)
-
 
 # Reference
 - [1] Zeiler, M. D., & Fergus, R. (2014, September). [Visualizing and understanding convolutional networks](https://arxiv.org/abs/1311.2901). In European conference on computer vision (pp. 818-833). Springer, Cham. ([Korean version](https://www.notion.so/tootouch/Visualizing-and-Understanding-Convolutional-Networks-4f396791212846439881575513271407))
