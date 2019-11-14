@@ -13,6 +13,17 @@ pytorch >= 1.2.0
 torchvision == 0.4.0
 ```
 
+# How to Run
+**Model Train**
+```
+python main.py --train --target=['mnist','cifar10']
+```
+
+**Model Selectivity Evaluation**
+```
+python main.py --eval --target=['mnist','cifar10'] --method=['VGB','IB','IG','GB','GC','GB-GC','DeconvNet']
+```
+
 # Dataset
 - MNIST
 - CIFAR-10
