@@ -39,7 +39,7 @@ Ensemble Methods
 
 # Experiments
 ## Model Architecture
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/models/simple_cnn_architecture.png =100x40)
+<img src="https://github.com/bllfpc/WhiteBox/blob/master/images/models/simple_cnn_architecture.png" alt="simple_cnn_architecture" width="200"/>
 
 ## Model Training
 
