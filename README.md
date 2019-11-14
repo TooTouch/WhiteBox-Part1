@@ -1,4 +1,4 @@
-# WhiteBox
+# WhiteBox-Part
 
 The White Box Project is a project that introduces many ways to solve the part of the black box of machine learning. In this part, i've introduced and experimented with ways to interpret and evaluate models in the field of image. 
 
