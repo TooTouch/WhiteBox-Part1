@@ -49,8 +49,7 @@ MNIST | CIFAR-10
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg)
 
 ## Selectivity - MNIST
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_change_by_methods.jpg)
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/accuracy_change.jpg)
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change.jpg)
 
 
 
