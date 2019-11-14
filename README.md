@@ -55,8 +55,10 @@ Architecture | MNIST | CIFAR-10
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg)
 
 ## Selectivity - MNIST
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change.jpg)
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_mnist.jpg)
 
+## Selectivity - CIFAR-10
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_cifar10.jpg)
 
 
 # Reference
