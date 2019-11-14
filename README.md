@@ -50,10 +50,7 @@ Ensemble Methods
 - KAR [6]
 
 # Experiments
-## Model Architecture
-
-
-## Model Training
+## Model Architecture & Performance
 
 Architecture | MNIST | CIFAR-10
 ---|---|---
