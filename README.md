@@ -5,7 +5,7 @@ The White Box Project is a project that introduces many ways to solve the part o
 I shared Korean versions for each reference to study methodology and English. Please refer to the reference.  
 참고 자료별로 영어공부겸 한국어로 번역한 자료가 있습니다.
 
-***Keywords** : Explainable AI, XAI, Interpretable AI, Attribution Method, Saliency Map*
+***Keywords** : `Explainable AI`, `XAI`, `Interpretable AI`, `Attribution Method`, `Saliency Map`*
 
 # Requirements
 ```
