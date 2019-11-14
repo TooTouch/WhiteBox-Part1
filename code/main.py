@@ -11,9 +11,10 @@ import torch.nn.functional as F
 import torchvision.models as models
 
 # defined function
+from saliency.evaluation_methods import selecticity_evaluation
 from dataload import mnist_load, cifar10_load
 from model import SimpleCNN
-from utils import seed_everything, ModelTrain, ModelTest
+from utils import seed_everything, ModelTrain, ModelTest, make_saliency_map
 
 # arguments
 import argparse
@@ -102,21 +103,44 @@ def main(args):
         os.mkdir(logdir)
     with open(f'{logdir}/{model_name}_logs.txt','w') as outfile:
         json.dump(modeltrain.history, outfile)
+
+
     
     
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
+    # select mode
+    parser.add_argument('--train', action='store_true', help='if train is true, train model')
+    parser.add_argument('--eval', action='store_true', help='if eval is true, evaluate model')
+    # train parameters
     parser.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
-    parser.add_argument('--epochs', type=int, defualt=300, help='number of epochs')
-    parser.add_argument('--batch_size', type=int, defualt=128, help='number of batch')
+    parser.add_argument('--epochs', type=int, default=300, help='number of epochs')
+    parser.add_argument('--batch_size', type=int, default=128, help='number of batch')
     parser.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
-    parser.add_argument('--lr', type=float, defualt=0.01, help='learning rate')
+    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
     parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
     parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
     parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
+    # make saliency map
+    parser.add_argument('--make_saliency', action='store_true', help='if make saliency is true, make saliency map.')
+    # attribution method
+    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet',None], help='select attribution method')
+    # selectivity
+    parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
+    parser.add_argument('--sample_pct', type=float, default=0.1, help='sample ratio')
     args = parser.parse_args()
 
     # TODO : Tensorboard Check
-    main(args=args)
+    if args.train:
+        # python main.py --train --target=['mnist','cifar10']
+        main(args=args)
+    
+    if args.make_saliency:
+        # python main.py --make_saliency
+        make_saliency_map()
+
+    if args.eval:
+        # python main.py --eval --target=['mnist','cifar10']
+        selecticity_evaluation(args)
+
 

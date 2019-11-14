@@ -6,7 +6,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms 
 
 
-def mnist_load(batch_size, validation_rate, shuffle=True, random_seed=223):
+def mnist_load(batch_size=128, validation_rate=0.2, shuffle=True, random_seed=223):
     # Transforms
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -43,7 +43,7 @@ def mnist_load(batch_size, validation_rate, shuffle=True, random_seed=223):
                              num_workers=0)
 
     testloader = DataLoader(dataset=mnist_test,
-                            batch_size=batch_size,
+                            batch_size=1,
                             shuffle=shuffle,
                             num_workers=0)
     print('Data Complete')
@@ -51,14 +51,20 @@ def mnist_load(batch_size, validation_rate, shuffle=True, random_seed=223):
     return trainloader, validloader, testloader
 
 
-def cifar10_load(batch_size, validation_rate, shuffle=True, random_seed=223):
+def cifar10_load(batch_size=128, validation_rate=0.2, shuffle=True, random_seed=223, augmentation=True):
     # Transforms
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    ])
+    if augmentation:
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+    else:
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
@@ -104,7 +110,7 @@ def cifar10_load(batch_size, validation_rate, shuffle=True, random_seed=223):
                              num_workers=0)
 
     testloader = DataLoader(dataset=cifar10_test,
-                            batch_size=batch_size,
+                            batch_size=1,
                             shuffle=shuffle,
                             num_workers=0)
     print('Data Complete')                            
