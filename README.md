@@ -29,16 +29,16 @@ python main.py --eval --target=['mnist','cifar10'] --method=['VGB','IB','IG','GB
 - CIFAR-10
 
 # Saliency Maps
-Attribution Methods 
-- Vanilla Backpropagation (VBP)
+**Attribution Methods**
+- [Vanilla Backpropagation (VBP)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Vanilla%20Backpropagation%20%26%20SmoothGrad.ipynb)
 - Input x Backpropagation (IB)
-- DeconvNet [1]
-- Guided Backpropagation (GB) [2]
-- Integrated Gradients (IG) [3]
-- Grad-CAM (GC) [4]
-- Guided Grad-CAM (GB-GC) [4]
+- [DeconvNet](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20DeconvNet%20%26%20SmoothGrad.ipynb) [1]
+- [Guided Backpropagation (GB)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided%20Backpropagation%20%26%20Guided%20GradCam%20%26%20SmoothGrad.ipynb) [2]
+- [Integrated Gradients (IG)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Integrated%20Gradients%20%26%20SmoothGrad.ipynb) [3]
+- [Grad-CAM (GC)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20GradCAM%20%26%20SmoothGrad.ipynb) [4]
+- [Guided Grad-CAM (GB-GC)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided%20Backpropagation%20%26%20Guided%20GradCam%20%26%20SmoothGrad.ipynb) [4]
 
-Ensemble Methods
+**Ensemble Methods**
 - SmoothGrad (SG) [5]
 - SmoothGrad-Squared (SG-SQ) [6]
 - SmoothGrad-VAR (SG-VAR) [6]
