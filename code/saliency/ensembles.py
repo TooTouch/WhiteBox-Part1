@@ -1,62 +1,86 @@
 import numpy as np
 import torch
 from torch.autograd import Variable
-from utils import seed_everything
+from utils import seed_everything, rescale_image
 
-def generate_smooth_grad(pre_img, output_size, n, sigma, layer, model, target_class=None):
+# normal distribution
+def normal_dist(img, m, std):
+    return torch.zeros_like(img).normal_(m, std**2).numpy()
+
+
+def generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer=None):
     seed_everything()
     
-    smooth_grad = np.zeros(output_size)
+    # make smooth_grad array
+    smooth_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
 
-    mean = 0
-    sigma = sigma / (torch.max(pre_img) - torch.min(pre_img)).item()
+    # mean, sigma
+    mins = pre_imgs.detach().numpy().min(axis=(1,2,3))
+    maxs = pre_imgs.detach().numpy().max(axis=(1,2,3))
+    mean = [0] * pre_imgs.size(0)
+    sigma = (sigma / (maxs - mins)).squeeze()
 
     for i in range(n):
-        noise = Variable(torch.zeros(pre_img.size()).normal_(mean, sigma**2))
+        noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
-        noisy_img = pre_img + noise
-        output_img, prob, pred = model.generate_image(noisy_img, layer, target_class)
-        smooth_grad = smooth_grad + output_img
+        noisy_imgs = pre_imgs + torch.Tensor(noise)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        smooth_grad = smooth_grad + outputs
 
     smooth_grad = smooth_grad / n
+    smooth_grad = rescale_image(smooth_grad.transpose(0,3,1,2))
 
-    return smooth_grad, prob, pred
+    return smooth_grad, probs, preds
 
-def generate_smooth_square_grad(pre_img, output_size, n, sigma, layer, model, target_class=None):
+def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, layer=None):
     seed_everything()
     
-    smooth_square_grad = np.zeros(output_size)
+    # make smooth_square_grad array
+    smooth_square_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
 
     mean = 0
-    sigma = sigma / (torch.max(pre_img) - torch.min(pre_img)).item()
+    # mean, sigma
+    mins = pre_imgs.detach().numpy().min(axis=(1,2,3))
+    maxs = pre_imgs.detach().numpy().max(axis=(1,2,3))
+    mean = [0] * pre_imgs.size(0)
+    sigma = (sigma / (maxs - mins)).squeeze()
 
     for i in range(n):
-        noise = Variable(torch.zeros(pre_img.size()).normal_(mean, sigma**2))
+        noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
-        noisy_img = pre_img + noise
-        output_img, prob, pred = model.generate_image(noisy_img, layer, target_class)
-        smooth_square_grad = smooth_square_grad + output_img**2
+        noisy_imgs = pre_imgs + torch.Tensor(noise)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        smooth_square_grad = smooth_square_grad + outputs**2
 
     smooth_square_grad = smooth_square_grad / n
+    smooth_square_grad = rescale_image(smooth_square_grad.transpose(0,3,1,2))
+
+    return smooth_square_grad, probs, preds
 
 
-def generate_smooth_var_grad(pre_img, output_size, n, sigma, layer, model, target_class=None):
+def generate_smooth_var_grad(pre_imgs, targets, n, sigma, model, layer=None):
     seed_everything()
 
-    smooth_var_grad = np.zeros(output_size)
+    # make smooth_square_grad array
+    smooth_var_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
 
-    smooth_grad, _, _ = generate_smooth_grad(pre_img, output_size, n, sigma, layer, model, target_class)
+    smooth_grad, _, _ = generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer)
 
     mean = 0
-    sigma = sigma / (torch.max(pre_img) - torch.min(pre_img)).item()
+    # mean, sigma
+    mins = pre_imgs.detach().numpy().min(axis=(1,2,3))
+    maxs = pre_imgs.detach().numpy().max(axis=(1,2,3))
+    mean = [0] * pre_imgs.size(0)
+    sigma = (sigma / (maxs - mins)).squeeze()
 
     for i in range(n):
-        noise = Variable(torch.zeros(pre_img.size()).normal_(mean, sigma**2))
+        noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
-        noisy_img = pre_img + noise
-        output_img, prob, pred = model.generate_image(noisy_img, layer, target_class)
-        smooth_var_grad = smooth_var_grad + (output_img**2 - smooth_grad**2)
+        noisy_imgs = pre_imgs + torch.Tensor(noise)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        smooth_var_grad = smooth_var_grad + (outputs**2 - smooth_grad**2)
 
     smooth_var_grad = smooth_var_grad / n
+    smooth_var_grad = rescale_image(smooth_var_grad.transpose(0,3,1,2))
 
-    return smooth_var_grad, prob, pred
+    return smooth_var_grad, probs, preds

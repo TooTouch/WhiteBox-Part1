@@ -1,12 +1,20 @@
 import torch 
 import torch.nn as nn
+from torch.autograd import Variable
+
 import numpy as np
+import h5py
+from tqdm import tqdm
+
+import cv2
+from PIL import Image
 
 from collections import OrderedDict
 from functools import partial
 
 from utils import rescale_image
-from PIL import Image
+from model import SimpleCNNDeconv
+
 
 
 class VanillaBackprop(object):
@@ -15,35 +23,29 @@ class VanillaBackprop(object):
 
         # evaluation mode
         self.model.eval()
-        # hook 
-        self.hook_layers()
+    #     # hook 
+    #     self.hook_layers()
 
-    def hook_layers(self):
-        def hook(module, grad_in, grad_out, key):
-            self.model.gradients[key] = grad_in[0]
+    # def hook_layers(self):
+    #     def hook(module, grad_in, grad_out, key):
+    #         self.model.gradients[key] = grad_in[0]
 
-        for pos, module in enumerate(self.model._modules.get('features')):
-            module.register_backward_hook(partial(hook, key=pos))
+    #     for pos, module in enumerate(self.model._modules.get('features')):
+    #         module.register_backward_hook(partial(hook, key=pos))
 
-    def generate_image(self, pre_img, layer=0, target_class=None):
-        probs = self.model(pre_img)
-        prob = probs.max().item()
-        pred = probs.argmax().item()
+    def generate_image(self, pre_imgs, targets, layer=None):
+        pre_imgs = Variable(pre_imgs, requires_grad=True)
+        outputs = self.model(pre_imgs)
 
         self.model.zero_grad()
 
-        if target_class is None:
-            target_class = pred
+        one_hot_output = torch.zeros_like(outputs).scatter(1, targets.unsqueeze(1), 1).detach()
+        outputs.backward(gradient=one_hot_output)
+        probs, preds = outputs.detach().max(1)
 
-        one_hot_output = torch.FloatTensor(1, probs.size()[-1])
-        one_hot_output[0][target_class] = 1
+        re_imgs = rescale_image(pre_imgs.grad.numpy())
 
-        probs.backward(gradient=one_hot_output)
-
-        output = self.model.gradients[layer].numpy()[0] # (nb_filter, W, H)
-        output = rescale_image(output)
-
-        return (output, prob, pred)
+        return (re_imgs, probs.numpy(), preds.numpy())
 
 
 class IntegratedGradients(object):
@@ -67,8 +69,8 @@ class IntegratedGradients(object):
         xbar_list = [input_image*step for step in step_list]
         return xbar_list 
 
-    def generate_gradients(self, pre_img, layer=0, target_class=None):
-        probs = self.model(pre_img)
+    def generate_gradients(self, pre_imgs, layer=0, target_class=None):
+        probs = self.model(pre_imgs)
         prob = probs.max().item()
         pred = probs.argmax().item()
 
@@ -84,9 +86,9 @@ class IntegratedGradients(object):
 
         return gradients_arr, prob, pred
 
-    def generate_image(self, pre_img, layer=0, target_class=None, steps=100):
-        xbar_list = self.generate_images_on_linear_path(pre_img, steps)
-        output = np.zeros(pre_img.size()[1:])
+    def generate_image(self, pre_imgs, layer=0, target_class=None, steps=100):
+        xbar_list = self.generate_images_on_linear_path(pre_imgs, steps)
+        output = np.zeros(pre_imgs.size()[1:])
 
         for xbar_image in xbar_list:
             single_integrated_grad, prob, pred = self.generate_gradients(xbar_image, layer, target_class)
@@ -132,8 +134,8 @@ class GuidedBackprop(object):
                 module.register_backward_hook(relu_backward_hook_function)
                 module.register_forward_hook(relu_forward_hook_function)
 
-    def generate_image(self, pre_img, layer=0, target_class=None):
-        probs = self.model(pre_img)
+    def generate_image(self, pre_imgs, layer=0, target_class=None):
+        probs = self.model(pre_imgs)
         prob = probs.max().item()
         pred = probs.argmax().item()
 
@@ -185,9 +187,9 @@ class GradCAM(object):
         self.model = model
         self.model.eval()
 
-    def generate_image(self, pre_img, layer, target_class=None):
+    def generate_image(self, pre_imgs, layer, target_class=None):
         extractor = CamExtractor(self.model, layer)
-        conv_output, probs = extractor.forward_pass(pre_img)
+        conv_output, probs = extractor.forward_pass(pre_imgs)
 
         prob = probs.max()
         pred = probs.argmax()
@@ -218,7 +220,7 @@ class GradCAM(object):
         output = np.uint8(output * 255)
     
         # resize to input image size
-        output = np.uint8(Image.fromarray(output).resize((pre_img.shape[2], pre_img.shape[3]), Image.ANTIALIAS))/255
+        output = np.uint8(Image.fromarray(output).resize((pre_imgs.shape[2], pre_imgs.shape[3]), Image.ANTIALIAS))/255
 
         return (output, prob, pred)
 
@@ -244,10 +246,10 @@ class DeconvNet(object):
         for idx, layer in enumerate(self.model._modules.get('features')):
             layer.register_forward_hook(partial(hook, key=idx))
 
-    def generate_image(self, pre_img, layer, target_class=None, max_activation=False):
+    def generate_image(self, pre_imgs, layer, target_class=None, max_activation=False):
 
         # prediction
-        probs = self.model(pre_img).detach()
+        probs = self.model(pre_imgs).detach()
         prob = probs.max().item()
         pred = probs.argmax().item()
         
@@ -301,9 +303,9 @@ class GuidedGradCAM(object):
         self.GC_model = GradCAM(model)
         self.GB_model = GuidedBackprop(model)
 
-    def generate_image(self, pre_img, layer, target_class):
-        output_GC, prob, pred = self.GC_model.generate_image(pre_img, 8, target_class)
-        output_GB, _, _ = self.GB_model.generate_image(pre_img, layer, target_class)
+    def generate_image(self, pre_imgs, layer, target_class):
+        output_GC, prob, pred = self.GC_model.generate_image(pre_imgs, 8, target_class)
+        output_GB, _, _ = self.GB_model.generate_image(pre_imgs, layer, target_class)
         output = np.multiply(output_GC, output_GB.transpose(2,0,1))
         output = output.transpose(1,2,0)
 
@@ -314,10 +316,103 @@ class InputBackprop(object):
     def __init__(self, model):
         self.VBP_model = VanillaBackprop(model)
 
-    def generate_image(self, pre_img, layer, target_class):
-        output_VBP, prob, pred = self.VBP_model.generate_image(pre_img, layer, target_class)
-        input_img = pre_img.detach().numpy()
-        input_img = rescale_image(input_img.squeeze(0))
+    def generate_image(self, pre_imgs, targets, layer=None):
+        output_VBP, prob, pred = self.VBP_model.generate_image(pre_imgs, targets, layer)
+        input_img = pre_imgs.detach().numpy()
+        input_img = rescale_image(input_img)
         output = np.multiply(output_VBP, input_img)
 
         return output, prob, pred
+
+
+def save_saliency_map(target, method):
+    # data load
+    if target == 'mnist':
+        trainset, validset, testloader = mnist_load(shuffle=False)
+    elif target == 'cifar10':
+        trainset, validset, testloader = cifar10_load(shuffle=False, augmentation=False)
+
+    # model load
+    weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
+    model = SimpleCNN(target)
+    model.load_state_dict(weights['model'])
+
+    # saliency map
+    attribute_method, layer = saliency_map_choice(method, model, target)
+    
+    # make saliency_map
+    trainset_saliency_map = np.zeros(trainset.dataset.data.shape, dtype=np.float32)
+    validset_saliency_map = np.zeros(validset.dataset.data.shape, dtype=np.float32)
+    testset_saliency_map = np.zeros(testset.dataset.data.shape, dtype=np.float32)
+
+    for i in tqdm(range(trainset.dataset.data), desc='trainset'):
+        img = trainset.dataset.data[i]
+        target = trainset.dataset.targets[i]
+        pre_imgs = trainset.dataset.transform(np.array(img)).unsqueeze(0)
+        output = attribute_method.generate_image(pre_imgs, layer, target)        
+        if (target=='cifar10') and (method=='GC'):
+            # GradCAM output shape is (W,H)
+            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
+            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)
+        trainset_saliency_map[i] = output    
+    
+    for i in tqdm(range(validset.dataset.data), desc='validset'):
+        img = validset.dataset.data[i]
+        target = validset.dataset.targets[i]
+        pre_imgs = validset.dataset.transform(np.array(img)).unsqueeze(0)
+        output = attribute_method.generate_image(pre_imgs, layer, target)
+        if (target=='cifar10') and (method=='GC'):
+            # GradCAM output shape is (W,H)
+            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
+            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
+        validset_saliency_map[i] = output    
+
+    for i in tqdm(range(testset.dataset.data), desc='testset'):
+        img = testset.dataset.data[i]
+        target = testset.dataset.targets[i]
+        pre_imgs = validset.dataset.transform(np.array(img)).unsqueeze(0)
+        output = attribute_method.generate_image(pre_imgs, layer, target)
+        if (target=='cifar10') and (method=='GC'):
+            # GradCAM output shape is (W,H)
+            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
+            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
+        testset_saliency_map[i] = output    
+
+    # make saliency_map directory 
+    if not os.path.isdir('../saliency_map'):
+        os.mkdir('../saliency_map')
+
+    # save saliency map to hdf5
+    with h5py.File('../saliency_map/{}_{}.hdf5'.format(target, method),'w') as hf:
+        hf.create_dataset('trainset',data=trainset_saliency_map)
+        hf.create_dataset('validset',data=validset_saliency_map)
+        hf.create_dataset('testset',data=testset_saliency_map)
+        hf.close()
+
+def saliency_map_choice(method, model, target=None):
+    if method == 'VBP':
+        saliency_map = VanillaBackprop(s.model)
+        layer = 0 
+    elif method == 'GB':
+        saliency_map = GuidedBackprop(model)
+        layer = 0 
+    elif method == 'IG':
+        saliency_map = IntegratedGradients(model)
+        layer = 0 
+    elif method == 'GC':
+        saliency_map = GradCAM(model)
+        layer = 11
+    elif method == 'DeconvNet':
+        deconv_model = SimpleCNNDeconv(target)
+        saliency_map = DeconvNet(model, deconv_model)
+        layer = 0
+
+    return saliency_map, layer
+    
+    
+def make_saliency_map():
+    target_lst = ['mnist','cifar10']
+    method_lst = ['VBP','IG','GB','GC','DeconvNet']
+    for target in target_lst:
+        for method in method_lst:
+            save_saliency_map(target, method)

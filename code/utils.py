@@ -1,19 +1,13 @@
 import torch
-from torch.autograd import Variable
 
 import random
 import os
 import numpy as np
 import time
 import datetime 
-import h5py
-import cv2
-from tqdm import tqdm
 
 from dataload import mnist_load, cifar10_load
-from model import SimpleCNN, SimpleCNNDeconv
-
-from saliency.attribution_methods import *
+from model import SimpleCNN
 
 
 def seed_everything(seed=223):
@@ -330,12 +324,17 @@ def get_samples(target, nb_class=10, sample_index=0):
     target_class2idx = testset.class_to_idx
     target_classes = dict(zip(list(target_class2idx.values()), list(target_class2idx.keys())))
 
-    # select image
+    # select images
     idx_by_class = [np.where(np.array(testset.targets)==i)[0][sample_index] for i in range(nb_class)]
     original_images = testset.data[idx_by_class]
     if not isinstance(original_images, np.ndarray):
         original_images = original_images.numpy()
     original_images = original_images.reshape((nb_class,)+image_size)
+    # select targets
+    if isinstance(testset.targets, list):
+        original_targets = torch.LongTensor(testset.targets)[idx_by_class]
+    else:
+        original_targets = testset.targets[idx_by_class]
 
     # model load
     weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
@@ -347,109 +346,25 @@ def get_samples(target, nb_class=10, sample_index=0):
     pre_images = np.transpose(pre_images, (0,3,1,2))
     for i in range(len(original_images)):
         pre_images[i] = testset.transform(original_images[i])
-    pre_images = Variable(pre_images, requires_grad=True)
     
-    return original_images, pre_images, target_classes, model
+    return original_images, original_targets, pre_images, target_classes, model
 
 
-def rescale_image(image):
+def rescale_image(images):
     '''
     MinMax scaling
+
+    Args:
+        images : images (batch_size, C, H, W)
     '''
-    image = (image - image.min())/(image.max() - image.min())
-    image = image.transpose(1,2,0)
+    mins = np.min(images, axis=(1,2,3)) # (batch_size, 1)
+    mins = mins.reshape(mins.shape + (1,1,1,)) # (batch_size, 1, 1, 1)
+    maxs = np.max(images, axis=(1,2,3))
+    maxs = maxs.reshape(maxs.shape + (1,1,1,))
 
-    return image
+    images = (images - mins)/(maxs - mins)
+    images = images.transpose(0,2,3,1)
+
+    return images
 
 
-def save_saliency_map(target, method):
-    # data load
-    if target == 'mnist':
-        trainset, validset, testloader = mnist_load(shuffle=False)
-    elif target == 'cifar10':
-        trainset, validset, testloader = cifar10_load(shuffle=False, augmentation=False)
-
-    # model load
-    weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
-    model = SimpleCNN(target)
-    model.load_state_dict(weights['model'])
-
-    # saliency map
-    attribute_method, layer = saliency_map_choice(method, model, target)
-    
-    # make saliency_map
-    trainset_saliency_map = np.zeros(trainset.dataset.data.shape, dtype=np.float32)
-    validset_saliency_map = np.zeros(validset.dataset.data.shape, dtype=np.float32)
-    testset_saliency_map = np.zeros(testset.dataset.data.shape, dtype=np.float32)
-
-    for i in tqdm(range(trainset.dataset.data), desc='trainset'):
-        img = trainset.dataset.data[i]
-        target = trainset.dataset.targets[i]
-        pre_img = trainset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_img, layer, target)        
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)
-        trainset_saliency_map[i] = output    
-    
-    for i in tqdm(range(validset.dataset.data), desc='validset'):
-        img = validset.dataset.data[i]
-        target = validset.dataset.targets[i]
-        pre_img = validset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_img, layer, target)
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
-        validset_saliency_map[i] = output    
-
-    for i in tqdm(range(testset.dataset.data), desc='testset'):
-        img = testset.dataset.data[i]
-        target = testset.dataset.targets[i]
-        pre_img = validset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_img, layer, target)
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
-        testset_saliency_map[i] = output    
-
-    # make saliency_map directory 
-    if not os.path.isdir('../saliency_map'):
-        os.mkdir('../saliency_map')
-
-    # save saliency map to hdf5
-    with h5py.File('../saliency_map/{}_{}.hdf5'.format(target, method),'w') as hf:
-        hf.create_dataset('trainset',data=trainset_saliency_map)
-        hf.create_dataset('validset',data=validset_saliency_map)
-        hf.create_dataset('testset',data=testset_saliency_map)
-        hf.close()
-
-def saliency_map_choice(method, model, target=None):
-    if method == 'VBP':
-        saliency_map = VanillaBackprop(s.model)
-        layer = 0 
-    elif method == 'GB':
-        saliency_map = GuidedBackprop(model)
-        layer = 0 
-    elif method == 'IG':
-        saliency_map = IntegratedGradients(model)
-        layer = 0 
-    elif method == 'GC':
-        saliency_map = GradCAM(model)
-        layer = 11
-    elif method == 'DeconvNet':
-        deconv_model = SimpleCNNDeconv(target)
-        saliency_map = DeconvNet(model, deconv_model)
-        layer = 0
-
-    return saliency_map, layer
-    
-    
-def make_saliency_map():
-    target_lst = ['mnist','cifar10']
-    method_lst = ['VBP','IG','GB','GC','DeconvNet']
-    for target in target_lst:
-        for method in method_lst:
-            save_saliency_map(target, method)
