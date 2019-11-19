@@ -8,8 +8,10 @@ def normal_dist(img, m, std):
     return torch.zeros_like(img).normal_(m, std**2).numpy()
 
 
-def generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer=None):
+def generate_smooth_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     seed_everything()
+    if 'layer' not in kwargs.keys():
+        kwargs['layer'] = None
     
     # make smooth_grad array
     smooth_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
@@ -24,7 +26,7 @@ def generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer=None):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
-        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, **kwargs)
         smooth_grad = smooth_grad + outputs
 
     smooth_grad = smooth_grad / n
@@ -32,9 +34,11 @@ def generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer=None):
 
     return smooth_grad, probs, preds
 
-def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, layer=None):
+def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     seed_everything()
-    
+    if 'layer' not in kwargs.keys():
+        kwargs['layer'] = None
+
     # make smooth_square_grad array
     smooth_square_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
 
@@ -49,7 +53,7 @@ def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, layer=None):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
-        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, **kwargs)
         smooth_square_grad = smooth_square_grad + outputs**2
 
     smooth_square_grad = smooth_square_grad / n
@@ -58,13 +62,15 @@ def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, layer=None):
     return smooth_square_grad, probs, preds
 
 
-def generate_smooth_var_grad(pre_imgs, targets, n, sigma, model, layer=None):
+def generate_smooth_var_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     seed_everything()
+    if 'layer' not in kwargs.keys():
+        kwargs['layer'] = None
 
     # make smooth_square_grad array
     smooth_var_grad = np.zeros(pre_imgs.shape[:1] + pre_imgs.shape[2:] + pre_imgs.shape[1:2]) # (batch_size, H, W, C)
 
-    smooth_grad, _, _ = generate_smooth_grad(pre_imgs, targets, n, sigma, model, layer)
+    smooth_grad, _, _ = generate_smooth_grad(pre_imgs, targets, n, sigma, model, **kwargs)
 
     mean = 0
     # mean, sigma
@@ -77,7 +83,7 @@ def generate_smooth_var_grad(pre_imgs, targets, n, sigma, model, layer=None):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
-        outputs, probs, preds = model.generate_image(noisy_imgs, targets, layer)
+        outputs, probs, preds = model.generate_image(noisy_imgs, targets, **kwargs)
         smooth_var_grad = smooth_var_grad + (outputs**2 - smooth_grad**2)
 
     smooth_var_grad = smooth_var_grad / n

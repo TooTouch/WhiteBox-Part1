@@ -20,20 +20,10 @@ from model import SimpleCNNDeconv
 class VanillaBackprop(object):
     def __init__(self, model):
         self.model = model 
-
         # evaluation mode
         self.model.eval()
-    #     # hook 
-    #     self.hook_layers()
 
-    # def hook_layers(self):
-    #     def hook(module, grad_in, grad_out, key):
-    #         self.model.gradients[key] = grad_in[0]
-
-    #     for pos, module in enumerate(self.model._modules.get('features')):
-    #         module.register_backward_hook(partial(hook, key=pos))
-
-    def generate_image(self, pre_imgs, targets, layer=None):
+    def generate_image(self, pre_imgs, targets, **kwargs):
         pre_imgs = Variable(pre_imgs, requires_grad=True)
         outputs = self.model(pre_imgs)
 
@@ -51,52 +41,42 @@ class VanillaBackprop(object):
 class IntegratedGradients(object):
     def __init__(self, model):
         self.model = model
-        self.gradients = None
-
+        # evaluation mode
         self.model.eval()
 
-        self.hook_layers()
-
-    def hook_layers(self):
-        def hook(module, grad_in, grad_out, key):
-            self.model.gradients[key] = grad_in[0]
-
-        for pos, module in enumerate(self.model._modules.get('features')):
-            module.register_backward_hook(partial(hook, key=pos))
-
-    def generate_images_on_linear_path(self, input_image, steps):
-        step_list = np.arange(steps+1)/steps
-        xbar_list = [input_image*step for step in step_list]
+    def generate_images_on_linear_path(self, input_images, **kwargs):
+        step_list = np.arange(kwargs['steps']+1)/kwargs['steps']
+        xbar_list = [input_images*step for step in step_list]
         return xbar_list 
 
-    def generate_gradients(self, pre_imgs, layer=0, target_class=None):
-        probs = self.model(pre_imgs)
-        prob = probs.max().item()
-        pred = probs.argmax().item()
-
+    def generate_gradients(self, pre_imgs, targets, **kwargs):
+        pre_imgs = Variable(pre_imgs, requires_grad=True)
+        outputs = self.model(pre_imgs)
+        
         self.model.zero_grad()
 
-        if target_class == None:
-            target_class = pred
-        one_hot_output = torch.FloatTensor(1, probs.size()[-1]).zero_()
-        one_hot_output[0][target_class] = 1
+        one_hot_output = torch.zeros_like(outputs).scatter(1, targets.unsqueeze(1), 1).detach()
+        outputs.backward(gradient=one_hot_output)
+        probs, preds = outputs.detach().max(1)
 
-        probs.backward(gradient=one_hot_output)
-        gradients_arr = self.model.gradients[layer].data.numpy()[0]
+        imgs = pre_imgs.grad.numpy()
 
-        return gradients_arr, prob, pred
+        return (imgs, probs.numpy(), preds.numpy())
 
-    def generate_image(self, pre_imgs, layer=0, target_class=None, steps=100):
-        xbar_list = self.generate_images_on_linear_path(pre_imgs, steps)
-        output = np.zeros(pre_imgs.size()[1:])
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        if 'steps' not in kwargs.keys():
+            kwargs['steps'] = 10
+
+        xbar_list = self.generate_images_on_linear_path(pre_imgs, **kwargs)
+        outputs = np.zeros(pre_imgs.size())
 
         for xbar_image in xbar_list:
-            single_integrated_grad, prob, pred = self.generate_gradients(xbar_image, layer, target_class)
-            output = output + single_integrated_grad / steps
+            single_integrated_grad, probs, preds = self.generate_gradients(xbar_image, targets)
+            outputs = outputs + (single_integrated_grad/kwargs['steps'])
             
-        output = rescale_image(output)
+        outputs = rescale_image(outputs)
         
-        return output, prob, pred
+        return (outputs, probs, preds)
 
 
 class GuidedBackprop(object):
@@ -246,17 +226,17 @@ class DeconvNet(object):
         for idx, layer in enumerate(self.model._modules.get('features')):
             layer.register_forward_hook(partial(hook, key=idx))
 
-    def generate_image(self, pre_imgs, targets, layer=0):
+    def generate_image(self, pre_imgs, targets, **kwargs):
         # prediction
         outputs = self.model(pre_imgs).detach()
         probs, preds = outputs.max(1)
         
         # feature size
-        num_feat = self.model.feature_maps[layer].shape[1]
-        new_feat_map = self.model.feature_maps[layer].clone()
+        num_feat = self.model.feature_maps[kwargs['layer']].shape[1]
+        new_feat_map = self.model.feature_maps[kwargs['layer']].clone()
 
         # output deconvnet
-        deconv_outputs = self.deconv_model(self.model.feature_maps[layer], layer, self.model.pool_locs)
+        deconv_outputs = self.deconv_model(self.model.feature_maps[kwargs['layer']], kwargs['layer'], self.model.pool_locs)
 
         # denormalization
         deconv_outputs = deconv_outputs.data.numpy()
@@ -283,8 +263,8 @@ class InputBackprop(object):
     def __init__(self, model):
         self.VBP_model = VanillaBackprop(model)
 
-    def generate_image(self, pre_imgs, targets, layer=None):
-        output_VBP, prob, pred = self.VBP_model.generate_image(pre_imgs, targets, layer)
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        output_VBP, prob, pred = self.VBP_model.generate_image(pre_imgs, targets)
         input_img = pre_imgs.detach().numpy()
         input_img = rescale_image(input_img)
         output = np.multiply(output_VBP, input_img)
