@@ -246,56 +246,23 @@ class DeconvNet(object):
         for idx, layer in enumerate(self.model._modules.get('features')):
             layer.register_forward_hook(partial(hook, key=idx))
 
-    def generate_image(self, pre_imgs, layer, target_class=None, max_activation=False):
-
+    def generate_image(self, pre_imgs, targets, layer=0):
         # prediction
-        probs = self.model(pre_imgs).detach()
-        prob = probs.max().item()
-        pred = probs.argmax().item()
+        outputs = self.model(pre_imgs).detach()
+        probs, preds = outputs.max(1)
         
         # feature size
         num_feat = self.model.feature_maps[layer].shape[1]
         new_feat_map = self.model.feature_maps[layer].clone()
 
-        if max_activation:
-            # max feature
-            act_lst = []
-            for i in range(0, num_feat):
-                choose_map = new_feat_map[0, i, :, :]
-                activation = torch.max(choose_map)
-                act_lst.append(activation.item())
-
-            act_lst = np.array(act_lst)
-            mark = np.argmax(act_lst)
-
-            choose_map = new_feat_map[0, mark, :, :]
-            max_activation = torch.max(choose_map)
-
-            if mark == 0:
-                new_feat_map[:, 1:, :, :] = 0
-            else:
-                new_feat_map[:, :mark, :, :] = 0
-                if mark != num_feat - 1:
-                    new_feat_map[:, mark + 1:, :, :] = 0
-
-            choose_map = torch.where(choose_map == max_activation,
-                                    choose_map,
-                                    torch.zeros(choose_map.shape))
-
-            new_feat_map[0, mark, :, :] = choose_map
-
-            # output deconvnet
-            deconv_output = self.deconv_model(new_feat_map, layer, self.model.pool_locs)
-
-        else:
-            # output deconvnet
-            deconv_output = self.deconv_model(self.model.feature_maps[layer], layer, self.model.pool_locs)
+        # output deconvnet
+        deconv_outputs = self.deconv_model(self.model.feature_maps[layer], layer, self.model.pool_locs)
 
         # denormalization
-        output = deconv_output.data.numpy()[0]
-        output = rescale_image(output)
+        deconv_outputs = deconv_outputs.data.numpy()
+        deconv_outputs = rescale_image(deconv_outputs)
         
-        return (output, prob, pred)
+        return (deconv_outputs, probs.numpy(), preds.numpy())
 
 
 class GuidedGradCAM(object):
