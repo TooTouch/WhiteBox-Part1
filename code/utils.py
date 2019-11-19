@@ -399,7 +399,7 @@ def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, targ
     for i in range(row*(col-1)):
         r = i//(col-1)
         c = i%(col-1)
-        ax[r,c+1].imshow(results[c][r].squeeze(), color)
+        ax[r,c+1].imshow(results[c][r], color)
         ax[r,c+1].axis('off')
         # set title
         if r == 0:

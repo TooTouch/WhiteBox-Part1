@@ -111,3 +111,9 @@ venv.bak/
 
 # dataset
 dataset/
+
+# vscode
+.vscode
+
+# ipynb
+practice.ipynb

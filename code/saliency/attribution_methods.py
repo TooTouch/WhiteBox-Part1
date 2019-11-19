@@ -33,9 +33,9 @@ class VanillaBackprop(object):
         outputs.backward(gradient=one_hot_output)
         probs, preds = outputs.detach().max(1)
 
-        re_imgs = rescale_image(pre_imgs.grad.numpy())
+        sal_maps = rescale_image(pre_imgs.grad.numpy())
 
-        return (re_imgs, probs.numpy(), preds.numpy())
+        return (sal_maps, probs.numpy(), preds.numpy())
 
 
 class IntegratedGradients(object):
@@ -68,34 +68,25 @@ class IntegratedGradients(object):
             kwargs['steps'] = 10
 
         xbar_list = self.generate_images_on_linear_path(pre_imgs, **kwargs)
-        outputs = np.zeros(pre_imgs.size())
+        sal_maps = np.zeros(pre_imgs.size())
 
         for xbar_image in xbar_list:
             single_integrated_grad, probs, preds = self.generate_gradients(xbar_image, targets)
-            outputs = outputs + (single_integrated_grad/kwargs['steps'])
+            sal_maps = sal_maps + (single_integrated_grad/kwargs['steps'])
             
-        outputs = rescale_image(outputs)
+        sal_maps = rescale_image(sal_maps)
         
-        return (outputs, probs, preds)
+        return (sal_maps, probs, preds)
 
 
 class GuidedBackprop(object):
     def __init__(self, model):
-        self.model = model
-        self.gradients = None
-        self.forward_relu_outputs = []
-
+        self.model = model    
+        # evaluation mode
         self.model.eval()
+        # update relu
+        self.forward_relu_outputs = []
         self.update_relus()
-        self.hook_layers()
-
-    def hook_layers(self):
-        def hook(module, grad_in, grad_out, key):
-            self.model.gradients[key] = grad_in[0]
-
-        for pos, module in enumerate(self.model._modules.get('features')):
-            if not isinstance(module, nn.ReLU):
-                module.register_backward_hook(partial(hook, key=pos))
 
     def update_relus(self):
         def relu_backward_hook_function(module, grad_in, grad_out):
@@ -114,95 +105,98 @@ class GuidedBackprop(object):
                 module.register_backward_hook(relu_backward_hook_function)
                 module.register_forward_hook(relu_forward_hook_function)
 
-    def generate_image(self, pre_imgs, layer=0, target_class=None):
-        probs = self.model(pre_imgs)
-        prob = probs.max().item()
-        pred = probs.argmax().item()
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        pre_imgs = Variable(pre_imgs, requires_grad=True)
+        outputs = self.model(pre_imgs)
 
         self.model.zero_grad()
+        
+        one_hot_output = torch.zeros_like(outputs).scatter(1, targets.unsqueeze(1), 1).detach()
+        outputs.backward(gradient=one_hot_output)
+        probs, preds = outputs.detach().max(1)
 
-        if target_class is None:
-            target_class = pred
-        one_hot_output = torch.FloatTensor(1, probs.size()[-1]).zero_()
-        one_hot_output[0][target_class] = 1
+        sal_maps = rescale_image(pre_imgs.grad.numpy())
 
-        probs.backward(gradient=one_hot_output)
-
-        output = self.model.gradients[layer].data.numpy()[0]
-        output = rescale_image(output)
-
-        return (output, prob, pred)
-
-
-class CamExtractor(object):
-    def __init__(self, model, target_layer):
-        self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
-
-    def save_gradient(self, grad):
-        self.gradients = grad
-
-    def forward_pass_on_convolutions(self, x):
-        conv_output = None
-        for module_pos, module in self.model.features._modules.items():
-            if isinstance(module, nn.MaxPool2d):
-                x, location = module(x)
-            else:
-                x = module(x)
-            if int(module_pos) == self.target_layer:
-                x.register_hook(self.save_gradient)
-                conv_output = x
-        return conv_output, x
-
-    def forward_pass(self, x):
-        conv_output, x = self.forward_pass_on_convolutions(x)
-        x = x.view(x.size(0), -1)
-        x = self.model.classifier(x)
-
-        return conv_output, x
+        return (sal_maps, probs.numpy(), preds.numpy())
 
 class GradCAM(object):
     def __init__(self, model):
         self.model = model
+        # evaluation mode
         self.model.eval()
+        # hook
+        self.hook_layers()
+        # initial dicts
+        self.conv_outputs = OrderedDict()
+        self.gradients = OrderedDict()
+    
+    def hook_layers(self):
+        def hook_forward(module, input, output, key):
+            if isinstance(module, torch.nn.MaxPool2d):
+                self.conv_outputs[key] = output[0]
+            else:
+                self.conv_outputs[key] = output
 
-    def generate_image(self, pre_imgs, layer, target_class=None):
-        extractor = CamExtractor(self.model, layer)
-        conv_output, probs = extractor.forward_pass(pre_imgs)
+        def hook_backward(module, input, output, key):
+            self.gradients[key] = output[0]
 
-        prob = probs.max()
-        pred = probs.argmax()
+        for idx, layer in enumerate(self.model._modules.get('features')):
+            layer.register_forward_hook(partial(hook_forward, key=idx))
+            layer.register_backward_hook(partial(hook_backward, key=idx))
+            
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        if 'color' not in kwargs.keys():
+            kwargs['color'] = False
 
-        if target_class is None:
-            target_class = pred
-        one_hot_output = torch.FloatTensor(1, probs.size()[-1]).zero_()
-        one_hot_output[0][target_class] = 1
+        pre_imgs = Variable(pre_imgs, requires_grad=True)
+        outputs = self.model(pre_imgs)
 
-        self.model.features.zero_grad()
-        self.model.classifier.zero_grad()
+        self.model.zero_grad()
 
-        # gradients
-        probs.backward(gradient=one_hot_output, retain_graph=True)
-        guided_gradients = extractor.gradients.data.numpy()[0]
+        one_hot_output = torch.zeros_like(outputs).scatter(1, targets.unsqueeze(1), 1).detach()
+        outputs.backward(gradient=one_hot_output)
+        probs, preds = outputs.detach().max(1)
+
+        gradients = self.gradients[kwargs['layer']].numpy()
         
         # A = w * conv_output
-        target = conv_output.data.numpy()[0]
-        weights = np.mean(guided_gradients, axis=(1,2))
+        convs = self.conv_outputs[kwargs['layer']].detach().numpy()
+        weights = np.mean(gradients, axis=(2,3))
+        weights = weights.reshape(weights.shape + (1,1,))
 
-        output = np.zeros(target.shape[1:], dtype=np.float32)
-        for i, w in enumerate(weights):
-            output += w * target[i, :, :]
-        
+        gradcams = weights * convs
+        gradcams = gradcams.sum(axis=1)
+
+        # relu
+        gradcams = np.maximum(gradcams, 0)
+
         # minmax scaling * 255
-        output = np.maximum(output, 0)
-        output = (output - np.min(output)) / (np.max(output) - np.min(output))
-        output = np.uint8(output * 255)
+        mins = gradcams.min(axis=(1,2))
+        mins = mins.reshape(mins.shape + (1,1,))
+        maxs = gradcams.max(axis=(1,2))
+        maxs = maxs.reshape(maxs.shape + (1,1,))
+
+        gradcams = (gradcams - mins)/(maxs - mins)
+        gradcams = np.uint8(gradcams * 255)
     
         # resize to input image size
-        output = np.uint8(Image.fromarray(output).resize((pre_imgs.shape[2], pre_imgs.shape[3]), Image.ANTIALIAS))/255
+        def resize_image(gradcam, origin_image, color):
+            img = np.uint8(Image.fromarray(gradcam).resize((origin_image.shape[-2:]), Image.ANTIALIAS))/255
+            if color:
+                # output_GC (H,W) to (H,W,C)
+                img = cv2.applyColorMap(np.uint8(img*255), cv2.COLORMAP_JET)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            else:
+                img = np.expand_dims(img, axis=2)
+            
+            return img
 
-        return (output, prob, pred)
+        colors = [kwargs['color']] * gradcams.shape[0]
+        gradcams = np.array(list(map(resize_image, gradcams, pre_imgs, colors)))
+
+        
+
+        return (gradcams, probs.numpy(), preds.numpy())
 
 
 class DeconvNet(object):
@@ -250,13 +244,19 @@ class GuidedGradCAM(object):
         self.GC_model = GradCAM(model)
         self.GB_model = GuidedBackprop(model)
 
-    def generate_image(self, pre_imgs, layer, target_class):
-        output_GC, prob, pred = self.GC_model.generate_image(pre_imgs, 8, target_class)
-        output_GB, _, _ = self.GB_model.generate_image(pre_imgs, layer, target_class)
-        output = np.multiply(output_GC, output_GB.transpose(2,0,1))
-        output = output.transpose(1,2,0)
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        if 'layer' not in kwargs.keys():
+            kwargs['layer'] = 8
+        if 'color' not in kwargs.keys():
+            kwargs['color'] = False
 
-        return output, prob, pred
+        output_GC, probs, preds = self.GC_model.generate_image(pre_imgs, targets, **kwargs)
+        output_GB, _, _ = self.GB_model.generate_image(pre_imgs, targets, **kwargs)
+
+        sal_maps = np.multiply(output_GC, output_GB)
+        sal_maps = rescale_image(sal_maps.transpose(0,3,1,2))
+
+        return sal_maps, probs, preds
 
     
 class InputBackprop(object):
@@ -264,12 +264,14 @@ class InputBackprop(object):
         self.VBP_model = VanillaBackprop(model)
 
     def generate_image(self, pre_imgs, targets, **kwargs):
-        output_VBP, prob, pred = self.VBP_model.generate_image(pre_imgs, targets)
+        output_VBP, probs, preds = self.VBP_model.generate_image(pre_imgs, targets, **kwargs)
         input_img = pre_imgs.detach().numpy()
         input_img = rescale_image(input_img)
-        output = np.multiply(output_VBP, input_img)
 
-        return output, prob, pred
+        sal_maps = np.multiply(output_VBP, input_img)
+        sal_maps = rescale_image(sal_maps.transpose(0,3,1,2))
+
+        return sal_maps, probs, preds
 
 
 def save_saliency_map(target, method):
