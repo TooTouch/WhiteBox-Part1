@@ -1,6 +1,8 @@
 import torch
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 
+from model import SimpleCNN
 from dataload import mnist_load, cifar10_load
 from saliency.attribution_methods import *
 from saliency.ensembles import *
@@ -15,7 +17,7 @@ from tqdm import tqdm
 
 # TODO : Add ensemble methods 
 class Selectivity(object):
-    def __init__(self, model, target, method, ensemble=None, sample_pct=0.1, deconv_model=None, nb_class=10, sample_index=0):
+    def __init__(self, model, target, batch_size, method, ensemble=None, sample_pct=0.1, deconv_model=None, nb_class=10, sample_index=0):
         '''
         Args
             model : pretrained model
@@ -34,7 +36,7 @@ class Selectivity(object):
                 SG-SQ : SmoothGrad Square
                 SG-VAR : SmoothGrad VAR
             }
-            deconv_model : Deconvolution model. Only used if method is set tot DeconvNet.
+            deconv_model : Deconvolution model. Only used if method is set to DeconvNet.
             nb_class : number of class
             sample_index : sample image index by class
         '''
@@ -47,12 +49,12 @@ class Selectivity(object):
         self.target = target
         self.testset = testloader.dataset 
         self.img_size = self.testset.data.shape[1:] # mnist : (28,28), cifar10 : (32,32,3)
+        self.batch_size = batch_size
 
         # sampling
         seed_everything()
         sample_size = int(len(self.testset) * sample_pct)
         sample_idx = np.random.choice(len(self.testset), sample_size, replace=False)
-        print(sample_idx.shape)
         self.testset.data = self.testset.data[sample_idx]
         self.testset.targets = np.array(self.testset.targets)[sample_idx]
         self.sample_pct = sample_pct
@@ -61,87 +63,98 @@ class Selectivity(object):
         # model setting
         self.model = model
         self.model.eval()
-        if deconv_model != None:
-            self.deconv_model = deconv_model
+        self.deconv_model = deconv_model
 
         # saliency map
         self.method = method
         self.ensemble = ensemble
-        self.saliency_map, self.layer = self.saliency_map_choice()
+        self.saliency_map, self.layer, self.color = self.saliency_map_choice()
 
         # sample
         self.nb_class = nb_class
-        self.term = 5
-        self.nb_checkpoint = 1 # 0 to number of checkpoint
+        self.nb_checkpoint = 5 
         self.idx_by_class = [np.where(np.array(self.testset.targets)==i)[0][sample_index] for i in range(self.nb_class)]
         
     def eval(self, steps):
-        self.nb_checkpoint += int(steps / self.term) # 0 to number of checkpoint
-
-        acc_lst = np.zeros(steps+1, dtype=np.float32)
+        nb_ckp = ((steps+1)//self.nb_checkpoint) + 1
+        acc_lst = np.zeros(steps+1, dtype=np.float32) 
         pred_lst = np.zeros((steps+1, self.data_size), dtype=np.uint8)
         score_lst = np.zeros((steps+1, self.data_size), dtype=np.float32)
-        img_lst = np.zeros((self.nb_checkpoint, self.nb_class) + self.img_size, dtype=np.float32)
-        saliency_lst = np.zeros((self.nb_checkpoint, self.nb_class) + self.img_size, dtype=np.float32)
+        img_lst = np.zeros((nb_ckp, self.nb_class) + self.img_size, np.float32)
+        saliency_lst = np.zeros((nb_ckp, self.nb_class) + self.img_size, dtype=np.float32)
 
         # print
-        print('data size: ',self.data_size)
-        print('acc_lst.shape: ',acc_lst.shape)
-        print('pred_lst.shape: ',pred_lst.shape)
-        print('score_lst.shape: ',score_lst.shape)
-        print('img_lst.shape: ',img_lst.shape)
-        print('saliency_lst.shape: ',saliency_lst.shape)
-
         for s in range(steps+1):
-            for i in tqdm(range(self.data_size)):
-                # load image and target
-                img = self.testset.data[i]
-                target = np.array(self.testset.targets[i])
+            testloader = DataLoader(dataset=self.testset,
+                                    batch_size=self.batch_size,
+                                    shuffle=False,
+                                    num_workers=0)
 
-                # preprocessing
-                pre_img = self.testset.transform(np.array(img)).unsqueeze(0)
-                pre_img = Variable(pre_img, requires_grad=True)
+            scores, preds, acc, saliencys, indice = self.make_saliency(testloader)
+            print('[{0:}/{1:}]: Total Accuracy: {2:.3%}'.format(s, steps, acc))
 
-                # predict
-                probs = self.model(pre_img)
-                score = probs[0][target].item()
-                pred = probs.argmax().item()
+            # save
+            score_lst[s] = scores
+            pred_lst[s] = preds
+            acc_lst[s] = acc
+            
+            # checkpoint
+            if s % self.nb_checkpoint == 0:
+                img_lst[s//self.nb_checkpoint] = self.testset.data[self.idx_by_class]
+                saliency_lst[s//self.nb_checkpoint] = saliencys[self.idx_by_class]
 
-                score_lst[s,i] = score
-                pred_lst[s,i] = pred
-
-                # saliency map
-                output, _, _ = self.saliency_map.generate_image(pre_img, self.layer, target)
-                if (self.target=='cifar10') and (self.method=='GC'):
-                    # GradCAM output shape is (W,H)
-                    output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-                    output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-                output = output.reshape(self.img_size)
-
-                # replace maximum value to zero
-                idx = np.unravel_index(output.argmax(), self.img_size)
-                img[idx] = 0
-                self.testset.data[i] = img
+            # remove
+            if self.target=='mnist':
+                self.testset.data[np.arange(self.data_size), indice[:,0], indice[:,1]] = 0
+            elif self.target=='cifar10':
+                self.testset.data[np.arange(self.data_size), indice[:,0], indice[:,1], indice[:,2]] = 0
+            
                 
-                # save score and 
-                score_lst[s,i] = score
-
-                # checkpoint
-                if (i in self.idx_by_class) and (s % self.nb_checkpoint):
-                    img_lst[s//self.nb_checkpoint, target] = img
-                    saliency_lst[s//self.nb_checkpoint, target] = output
-
-            # save accuracy
-            correct = (pred_lst[s] == np.array(self.testset.targets)).sum()
-            acc_lst[s] = correct / self.data_size
-
-            # print
-            print('[{}/{}]: Total Accuracy: {}'.format(s, steps, acc_lst[s]))
-
         # save file to h5py
         self.save_file(acc_lst, score_lst, img_lst, saliency_lst, steps)
 
+    def make_saliency(self, loader):
+        correct = 0 
+        preds = np.array([], dtype=np.uint8)
+        scores = np.array([], dtype=np.float32)
+        saliencys = np.array([], dtype=np.float32).reshape((0,) + self.img_size)
+        indice = np.array([], dtype=np.uint8).reshape((0, len(self.img_size)))
+
+        for idx, batch in enumerate(loader):
+            imgs, targets = batch
+            targets = torch.LongTensor(targets.numpy())
+
+            b_size = imgs.shape[0]
+
+            # predict
+            outputs = self.model(imgs)
+            prob_b, pred_b = outputs.max(1)
+            score_b = outputs[np.arange(b_size), np.array(targets)].detach().numpy()
+
+            # saliency map
+            sal_maps_b, _, _ = self.saliency_map.generate_image(imgs, targets, layer=self.layer, color=self.color)
+            sal_maps_b = sal_maps_b.reshape((b_size,) + self.img_size)
+
+            # accuracy sum
+            correct += (pred_b.detach().numpy() == np.array(targets)).sum()
+
+            # replace maximum value to zero
+            indice_b = np.array([np.unravel_index(sal_maps_b[i].argmax(), self.img_size) for i in range(b_size)])
+
+            # save
+            preds = np.append(preds, prob_b.detach().numpy())
+            scores = np.append(scores, score_b)
+            saliencys = np.vstack([saliencys, sal_maps_b])
+            indice = np.vstack([indice,indice_b])
+
+        acc = correct / self.data_size
+
+        return scores, preds, acc, saliencys, indice
+
+
     def saliency_map_choice(self):
+        color = True if self.target == 'cifar10' else False 
+
         if self.method == 'VBP':
             saliency_map = VanillaBackprop(self.model)
             layer = 0 
@@ -156,15 +169,16 @@ class Selectivity(object):
             layer = 0 
         elif self.method == 'GC':
             saliency_map = GradCAM(self.model)
-            layer = 11
+            layer = 8
         elif self.method == 'GB-GC':
             saliency_map = GuidedGradCAM(self.model)
-            layer = 0
+            color = False
+            layer = 8
         elif self.method == 'DeconvNet':
             saliency_map = DeconvNet(self.model, self.deconv_model)
             layer = 0       
         
-        return saliency_map, layer
+        return saliency_map, layer, color
 
     
     def save_file(self, acc, score, img, saliency, steps):
@@ -270,10 +284,14 @@ def selecticity_evaluation(args):
         os.mkdir('../evaluation')
 
     # model load
-    _, _, _, model = get_samples(args.target)
+    weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(args.target))
+    model = SimpleCNN(args.target)
+    model.load_state_dict(weights['model'])
+
     # evaluation method
     selectivity_method = Selectivity(model=model, 
                                      target=args.target, 
+                                     batch_size=args.batch_size,
                                      method=args.method, 
                                      sample_pct=args.sample_pct)
     # evaluation

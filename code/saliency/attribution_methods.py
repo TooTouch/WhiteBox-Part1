@@ -338,6 +338,7 @@ def save_saliency_map(target, method):
         hf.create_dataset('testset',data=testset_saliency_map)
         hf.close()
 
+
 def saliency_map_choice(method, model, target=None):
     if method == 'VBP':
         saliency_map = VanillaBackprop(s.model)

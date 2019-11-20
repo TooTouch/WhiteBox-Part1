@@ -14,7 +14,7 @@ import torchvision.models as models
 from saliency.evaluation_methods import selecticity_evaluation
 from dataload import mnist_load, cifar10_load
 from model import SimpleCNN
-from utils import seed_everything, ModelTrain, ModelTest, make_saliency_map
+from utils import seed_everything, ModelTrain, ModelTest
 
 # arguments
 import argparse
@@ -140,7 +140,7 @@ if __name__ == '__main__':
         make_saliency_map()
 
     if args.eval:
-        # python main.py --eval --target=['mnist','cifar10']
+        # python main.py --eval --target=['mnist','cifar10'] --method=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet',None]
         selecticity_evaluation(args)
 
 
