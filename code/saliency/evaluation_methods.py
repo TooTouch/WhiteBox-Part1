@@ -217,6 +217,7 @@ class ROAR(object):
         self.savedir = '../checkpoint'
         self.logdir = '../logs'
 
+        )
 
         # remove percentage range
         self.remove_pct_lst = np.arange(0,1,0.1)
@@ -251,7 +252,6 @@ class ROAR(object):
             # Load model
             net = SimpleCNN(self.args.target).to(device)
             print()
-
 
             # Model compile
             optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) # MNIST

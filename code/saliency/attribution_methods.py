@@ -38,26 +38,23 @@ class VanillaBackprop(object):
         return (sal_maps, probs.numpy(), preds.numpy())
     
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
 
@@ -103,26 +100,23 @@ class IntegratedGradients(object):
         return (sal_maps, probs, preds)
 
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
 
@@ -168,26 +162,23 @@ class GuidedBackprop(object):
         return (sal_maps, probs.numpy(), preds.numpy())
 
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
 
@@ -269,26 +260,23 @@ class GradCAM(object):
         return (gradcams, probs.numpy(), preds.numpy())
 
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
 
@@ -333,29 +321,25 @@ class DeconvNet(object):
         return (deconv_outputs, probs.numpy(), preds.numpy())
     
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
-
 
 class GuidedGradCAM(object):
     def __init__(self, model):
@@ -377,26 +361,23 @@ class GuidedGradCAM(object):
         return sal_maps, probs, preds
 
     def save_saliency_map(self, dataloader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')
 
@@ -415,26 +396,23 @@ class InputBackprop(object):
 
         return sal_maps, probs, preds
 
-    def save_saliency_map(self, datal4oader, save_dir, **kwargs):
-        img_size = dataloader.dataset.data.shape 
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape[1:] 
         dim = len(img_size)
-        if dim == 3:
+        if dim == 2:
             img_size = img_size + (1,)
-        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
         probs = np.array([], dtype=np.float32)
         preds = np.array([], dtype=np.uint8)
-        targets = np.array([], dtype=np.uint8)
-        for img_b, target_b in dataloader:
+        for img_b, target_b in tqdm(dataloader, desc='Vanilla Backprop'):
             sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
             sal_maps = np.vstack([sal_maps, sal_map_b])
             probs = np.append(probs, prob_b)
             preds = np.append(preds, pred_b)
-            targets = np.array(targets, target_b)
 
         with h5py.File(save_dir, 'w') as hf:
             hf.create_dataset('saliencys',data=sal_maps)
             hf.create_dataset('probs',data=probs)
             hf.create_dataset('preds',data=preds)
-            hf.create_dataset('targest',data=targets)
             hf.close()
         print('Save saliency maps')

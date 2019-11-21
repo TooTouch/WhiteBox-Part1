@@ -134,10 +134,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # TODO : Tensorboard Check
-    if args.method=='selectivity':
-        selecticity_evaluation(args)
-    else:
-        # python main.py --train --target=['mnist','cifar10']
-        main(args=args)
+
+    # python main.py --train --target=['mnist','cifar10']
+    main(args=args)
+    
+    # if args.method=='selectivity':
+    #     selecticity_evaluation(args)
+    # else:
+        
 
 

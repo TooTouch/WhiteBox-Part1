@@ -124,7 +124,7 @@ class ModelTrain:
             self.optimizer.zero_grad()
 
             outputs = self.model(inputs)
-            loss = self.criterion(outputs, targets)
+            loss = self.criterion(outputs, targets.long())
         
             # Update
             loss.backward()
@@ -135,7 +135,7 @@ class ModelTrain:
 
             # Accuracy
             _, predicted = outputs.max(1)
-            train_acc += predicted.eq(targets).sum()
+            train_acc += predicted.eq(targets.long()).sum()
             total_size += targets.size(0)
 
         train_acc = train_acc.item() / total_size
@@ -155,12 +155,12 @@ class ModelTrain:
                 outputs = self.model(inputs).detach() 
 
                 # Loss
-                loss = self.criterion(outputs, targets)
+                loss = self.criterion(outputs, targets.long())
                 val_loss += loss.item() / len(self.validation_set)
 
                 # Accuracy
                 _, predicted = outputs.max(1)
-                val_acc += predicted.eq(targets).sum()
+                val_acc += predicted.eq(targets.long()).sum()
                 total_size += targets.size(0)
             
             val_acc = val_acc.item() / total_size
@@ -182,7 +182,7 @@ class ModelTest:
         '''
 
         self.model = model 
-        self.data = data
+        self.test_set = data
         self.device = device
 
         load_file = torch.load(f'{loaddir}/{model_name}.pth')
@@ -206,7 +206,7 @@ class ModelTest:
         test_acc = 0
 
         with torch.no_grad():
-            for inputs, targets in self.data:
+            for inputs, targets in self.test_set:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
 
                 outputs = self.model(inputs).detach() 
@@ -214,7 +214,7 @@ class ModelTest:
                 _, predicted = outputs.max(1)
                 test_acc += predicted.eq(targets).sum().item()
             
-            test_acc = test_acc / len(self.data.dataset)
+            test_acc = test_acc / len(self.test_set.dataset)
 
         return test_acc
         
