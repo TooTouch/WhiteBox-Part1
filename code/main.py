@@ -109,38 +109,35 @@ def main(args):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # select mode
-    parser.add_argument('--train', action='store_true', help='if train is true, train model')
-    parser.add_argument('--eval', action='store_true', help='if eval is true, evaluate model')
-    # train parameters
-    parser.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
-    parser.add_argument('--epochs', type=int, default=300, help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=128, help='number of batch')
-    parser.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
-    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
-    parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
-    parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
-    parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
-    # make saliency map
-    parser.add_argument('--make_saliency', action='store_true', help='if make saliency is true, make saliency map.')
-    # attribution method
-    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet',None], help='select attribution method')
-    # selectivity
-    parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
-    parser.add_argument('--sample_pct', type=float, default=0.1, help='sample ratio')
+    subparsers = parser.add_subparsers(help='Train or Evaluation')
+
+    # Train
+    parser_train = subparsers.add_parser('train', help='train help')
+    parser_train.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
+    parser_train.add_argument('--epochs', type=int, default=300, help='number of epochs')
+    parser_train.add_argument('--batch_size', type=int, default=128, help='number of batch')
+    parser_train.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
+    parser_train.add_argument('--lr', type=float, default=0.01, help='learning rate')
+    parser_train.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
+    parser_train.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
+    parser_train.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
+    
+    # Evaluation
+    parser_eval = subparsers.add_parser('eval', help='eval help')
+    parser_eval.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
+    parser_eval.add_argument('--method', type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
+    parser_eval.add_argument('--attr_method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet'], help='select attribution method')
+    parser_eval.add_argument('--steps', type=int, default=50, help='number of evaluation')
+    parser_eval.add_argument('--sample_pct', type=float, default=0.1, help='sample ratio')
+    parser_eval.add_argument('--batch_size', type=int, default=128, help='number of batch')
+    parser_eval.add_argument('--save_dir', type=str, help='save directory')
     args = parser.parse_args()
 
     # TODO : Tensorboard Check
-    if args.train:
+    if args.method=='selectivity':
+        selecticity_evaluation(args)
+    else:
         # python main.py --train --target=['mnist','cifar10']
         main(args=args)
-    
-    if args.make_saliency:
-        # python main.py --make_saliency
-        make_saliency_map()
-
-    if args.eval:
-        # python main.py --eval --target=['mnist','cifar10'] --method=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet',None]
-        selecticity_evaluation(args)
 
 

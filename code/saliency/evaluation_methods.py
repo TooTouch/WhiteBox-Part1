@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from model import SimpleCNN
+from model import SimpleCNN, SimpleCNNDeconv
 from dataload import mnist_load, cifar10_load
 from saliency.attribution_methods import *
 from saliency.ensembles import *
@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 # TODO : Add ensemble methods 
 class Selectivity(object):
-    def __init__(self, model, target, batch_size, method, ensemble=None, sample_pct=0.1, deconv_model=None, nb_class=10, sample_index=0):
+    def __init__(self, model, target, batch_size, method, ensemble=None, sample_pct=0.1, nb_class=10, sample_index=0):
         '''
         Args
             model : pretrained model
@@ -63,7 +63,7 @@ class Selectivity(object):
         # model setting
         self.model = model
         self.model.eval()
-        self.deconv_model = deconv_model
+        self.deconv_model = None
 
         # saliency map
         self.method = method
@@ -75,12 +75,12 @@ class Selectivity(object):
         self.nb_checkpoint = 5 
         self.idx_by_class = [np.where(np.array(self.testset.targets)==i)[0][sample_index] for i in range(self.nb_class)]
         
-    def eval(self, steps):
+    def eval(self, steps, save_dir):
         nb_ckp = ((steps+1)//self.nb_checkpoint) + 1
         acc_lst = np.zeros(steps+1, dtype=np.float32) 
         pred_lst = np.zeros((steps+1, self.data_size), dtype=np.uint8)
         score_lst = np.zeros((steps+1, self.data_size), dtype=np.float32)
-        img_lst = np.zeros((nb_ckp, self.nb_class) + self.img_size, np.float32)
+        img_lst = np.zeros((nb_ckp, self.nb_class) + self.img_size, dtype=np.float32)
         saliency_lst = np.zeros((nb_ckp, self.nb_class) + self.img_size, dtype=np.float32)
 
         # print
@@ -109,9 +109,8 @@ class Selectivity(object):
             elif self.target=='cifar10':
                 self.testset.data[np.arange(self.data_size), indice[:,0], indice[:,1], indice[:,2]] = 0
             
-                
         # save file to h5py
-        self.save_file(acc_lst, score_lst, img_lst, saliency_lst, steps)
+        self.save_file(acc_lst, score_lst, img_lst, saliency_lst, steps, save_dir)
 
     def make_saliency(self, loader):
         correct = 0 
@@ -175,14 +174,14 @@ class Selectivity(object):
             color = False
             layer = 8
         elif self.method == 'DeconvNet':
+            self.deconv_model = SimpleCNNDeconv(self.target)
             saliency_map = DeconvNet(self.model, self.deconv_model)
             layer = 0       
         
         return saliency_map, layer, color
-
     
-    def save_file(self, acc, score, img, saliency, steps):
-        save_name = '../evaluation/{}_{}_steps{}_ckp{}_sample{}.hdf5'.format(self.target,self.method,steps,self.nb_checkpoint,self.sample_pct)
+    def save_file(self, acc, score, img, saliency, steps, save_dir):
+        save_name = f'{save_dir}/{self.target}_{self.method}_steps{steps}_ckp{self.nb_checkpoint}_sample{self.sample_pct}.hdf5'
         with h5py.File(save_name, 'w') as hf:
             hf.create_dataset('acc', data=acc)
             hf.create_dataset('score', data=score)

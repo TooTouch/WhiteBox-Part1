@@ -36,6 +36,30 @@ class VanillaBackprop(object):
         sal_maps = rescale_image(pre_imgs.grad.numpy())
 
         return (sal_maps, probs.numpy(), preds.numpy())
+    
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
 
 
 class IntegratedGradients(object):
@@ -78,6 +102,30 @@ class IntegratedGradients(object):
         
         return (sal_maps, probs, preds)
 
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
+
 
 class GuidedBackprop(object):
     def __init__(self, model):
@@ -118,6 +166,30 @@ class GuidedBackprop(object):
         sal_maps = rescale_image(pre_imgs.grad.numpy())
 
         return (sal_maps, probs.numpy(), preds.numpy())
+
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
 
 class GradCAM(object):
     def __init__(self, model):
@@ -194,9 +266,31 @@ class GradCAM(object):
         colors = [kwargs['color']] * gradcams.shape[0]
         gradcams = np.array(list(map(resize_image, gradcams, pre_imgs, colors)))
 
-        
-
         return (gradcams, probs.numpy(), preds.numpy())
+
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
 
 
 class DeconvNet(object):
@@ -237,6 +331,30 @@ class DeconvNet(object):
         deconv_outputs = rescale_image(deconv_outputs)
         
         return (deconv_outputs, probs.numpy(), preds.numpy())
+    
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
 
 
 class GuidedGradCAM(object):
@@ -258,6 +376,30 @@ class GuidedGradCAM(object):
 
         return sal_maps, probs, preds
 
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
+
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
+
     
 class InputBackprop(object):
     def __init__(self, model):
@@ -273,96 +415,26 @@ class InputBackprop(object):
 
         return sal_maps, probs, preds
 
+    def save_saliency_map(self, datal4oader, save_dir, **kwargs):
+        img_size = dataloader.dataset.data.shape 
+        dim = len(img_size)
+        if dim == 3:
+            img_size = img_size + (1,)
+        sal_maps = np.array([], dtype=np.float32).reshape(img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+        targets = np.array([], dtype=np.uint8)
+        for img_b, target_b in dataloader:
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+            targets = np.array(targets, target_b)
 
-def save_saliency_map(target, method):
-    # data load
-    if target == 'mnist':
-        trainset, validset, testloader = mnist_load(shuffle=False)
-    elif target == 'cifar10':
-        trainset, validset, testloader = cifar10_load(shuffle=False, augmentation=False)
-
-    # model load
-    weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
-    model = SimpleCNN(target)
-    model.load_state_dict(weights['model'])
-
-    # saliency map
-    attribute_method, layer = saliency_map_choice(method, model, target)
-    
-    # make saliency_map
-    trainset_saliency_map = np.zeros(trainset.dataset.data.shape, dtype=np.float32)
-    validset_saliency_map = np.zeros(validset.dataset.data.shape, dtype=np.float32)
-    testset_saliency_map = np.zeros(testset.dataset.data.shape, dtype=np.float32)
-
-    for i in tqdm(range(trainset.dataset.data), desc='trainset'):
-        img = trainset.dataset.data[i]
-        target = trainset.dataset.targets[i]
-        pre_imgs = trainset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_imgs, layer, target)        
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)
-        trainset_saliency_map[i] = output    
-    
-    for i in tqdm(range(validset.dataset.data), desc='validset'):
-        img = validset.dataset.data[i]
-        target = validset.dataset.targets[i]
-        pre_imgs = validset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_imgs, layer, target)
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
-        validset_saliency_map[i] = output    
-
-    for i in tqdm(range(testset.dataset.data), desc='testset'):
-        img = testset.dataset.data[i]
-        target = testset.dataset.targets[i]
-        pre_imgs = validset.dataset.transform(np.array(img)).unsqueeze(0)
-        output = attribute_method.generate_image(pre_imgs, layer, target)
-        if (target=='cifar10') and (method=='GC'):
-            # GradCAM output shape is (W,H)
-            output = cv2.applyColorMap(np.uint8(output*255), cv2.COLORMAP_JET)
-            output = cv2.cvtCOLOR(output, cv2.COLOR_BGR2RGB)        
-        testset_saliency_map[i] = output    
-
-    # make saliency_map directory 
-    if not os.path.isdir('../saliency_map'):
-        os.mkdir('../saliency_map')
-
-    # save saliency map to hdf5
-    with h5py.File('../saliency_map/{}_{}.hdf5'.format(target, method),'w') as hf:
-        hf.create_dataset('trainset',data=trainset_saliency_map)
-        hf.create_dataset('validset',data=validset_saliency_map)
-        hf.create_dataset('testset',data=testset_saliency_map)
-        hf.close()
-
-
-def saliency_map_choice(method, model, target=None):
-    if method == 'VBP':
-        saliency_map = VanillaBackprop(s.model)
-        layer = 0 
-    elif method == 'GB':
-        saliency_map = GuidedBackprop(model)
-        layer = 0 
-    elif method == 'IG':
-        saliency_map = IntegratedGradients(model)
-        layer = 0 
-    elif method == 'GC':
-        saliency_map = GradCAM(model)
-        layer = 11
-    elif method == 'DeconvNet':
-        deconv_model = SimpleCNNDeconv(target)
-        saliency_map = DeconvNet(model, deconv_model)
-        layer = 0
-
-    return saliency_map, layer
-    
-    
-def make_saliency_map():
-    target_lst = ['mnist','cifar10']
-    method_lst = ['VBP','IG','GB','GC','DeconvNet']
-    for target in target_lst:
-        for method in method_lst:
-            save_saliency_map(target, method)
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.create_dataset('targest',data=targets)
+            hf.close()
+        print('Save saliency maps')
