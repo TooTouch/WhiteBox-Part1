@@ -120,3 +120,6 @@ practice.ipynb
 
 # saliency_maps
 saliency_maps/
+
+# ROAR checkpoint
+checkpoint/*ROAR*.pth

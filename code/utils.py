@@ -21,7 +21,7 @@ def seed_everything(seed=223):
     torch.backends.cudnn.deterministic = True
 
 class ModelTrain:
-    def __init__(self, model, data, epochs, criterion, optimizer, device, model_name, savedir, monitor=None, mode=None, validation=None, verbose=0):
+    def __init__(self, model, data, epochs, criterion, optimizer, device, model_name=None, savedir=None, monitor=None, mode=None, validation=None, verbose=0):
         '''
         params
 
@@ -76,7 +76,8 @@ class ModelTrain:
                 print('\n[{0:}/{1:}] Train - Acc: {2:.4%}, Loss: {3:.5f} | Val - Acc: {4:.5%}, Loss: {5:.6f} | Time: {6:}\n'.format(i+1, epochs, train_acc, train_loss, val_acc, val_loss, epoch_time))
 
             # Model check
-            ckp.check(epoch=i+1, model=self.model, score=val_acc)
+            if savedir:
+                ckp.check(epoch=i+1, model=self.model, score=val_acc)
             # es.check(val_loss)
 
             # Save history
@@ -195,11 +196,12 @@ class ModelTest:
             print(f'{k}: {v}')
 
         start = time.time()
-        test_acc = self.test()
+        self.results = self.test()
         end = time.time() - start
         test_time = datetime.timedelta(seconds=end)
-        print('Test Acc: {0:.4%} | Time: {1:}'.format(test_acc, test_time))
+        print('Test Acc: {0:.4%} | Time: {1:}'.format(self.results, test_time))
 
+        
 
     def test(self):
         self.model.eval()

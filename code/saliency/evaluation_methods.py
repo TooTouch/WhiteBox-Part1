@@ -1,4 +1,5 @@
 import torch
+import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
@@ -6,7 +7,7 @@ from model import SimpleCNN, SimpleCNNDeconv
 from dataload import mnist_load, cifar10_load
 from saliency.attribution_methods import *
 from saliency.ensembles import *
-from utils import seed_everything, get_samples
+from utils import seed_everything, get_samples, ModelTrain
 
 import cv2
 import os
@@ -190,90 +191,25 @@ class Selectivity(object):
             hf.close()
 
 
-
-class ROAR(object):
-    def __init__(self, args):
-        # Config
-        self.args = args
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-        # data load
-        if target == 'mnist':
-            self.trainset, self.validset, self.testloader = mnist_load()
-        elif target == 'cifar10':
-            self.trainset, self.validset, self.testloader = cifar10_load()
-        self.target = target
-        self.img_size = self.trainset.dataset.data.shape[1:] # mnist : (28,28), cifar10 : (32,32,3)
-
-        # model setting
-        self.model = model
-        self.model.eval()
-
-        # saliency map
-        self.method = method
-
-        # save_name
-        self.model_name = 'simple_cnn_{}_{}'.format(self.args.target, self.args.method) 
-        self.savedir = '../checkpoint'
-        self.logdir = '../logs'
-
-        )
-
-        # remove percentage range
-        self.remove_pct_lst = np.arange(0,1,0.1)
-
-    def saliency_map(self):
-        hf = h5py.File('../saliency_map/{}_{}.hdf5'.format(self.target, self.method))
-        trainset_saliency_map = np.array(hf.get('trainset'))
-        validset_saliency_map = np.array(hf.get('validset'))
-        testset_saliency_map = np.array(hf.get('testset'))
-        
-        return (trainset_saliency_map, validset_saliency_map, testset_saliency_map)
-
-    def remove_image(self, remove_pct, data_lst, saliency_map_lst):
-        nb_pixel = np.prod(self.img_size)
-        nb_remove = int(nb_pixel * remove_pct)
-
-        for i in range(3):
-            remove_idx = saliency_map_lst[i].argsort()[-nb_remove:]
-            data_lst[i].dataset.data[remove_idx] = 0
-        
-        return data_lst
-
-    def train(self):
-        for remove_pct in self.remove_pct_lst:
-            # data load
-            data_lst = [self.trainset, self.validset, self.testset]
-            # saliency map load
-            saliency_map_lst = self.saliency_map()
-            # remove importance values 
-            data_lst = self.remove_image(remove_pct, data_lst, saliency_map_lst)
-
-            # Load model
-            net = SimpleCNN(self.args.target).to(device)
-            print()
-
-            # Model compile
-            optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) # MNIST
-            criterion = nn.CrossEntropyLoss()
-
-            # Train
-            self.model_name = self._model_name + '_roar{}'.format(remove_pct)
-            modeltrain = ModelTrain(model=net,
-                                    data=trainloader,
-                                    epochs=self.args.epochs,
-                                    criterion=criterion,
-                                    optimizer=optimizer,
-                                    device=self.args.device,
-                                    model_name=self.args.model_name,
-                                    savedir=self.args.savedir,
-                                    monitor=self.args.monitor,
-                                    mode=self.args.mode,
-                                    validation=validloader,
-                                    verbose=self.args.verbose)           
-
-    def test(self):
-        pass
+def adjust_image(ratio, trainloader, saliency_maps, eval_method):
+    # set threshold
+    data = trainloader.dataset.data
+    img_size = data.shape[1:] # mnist : (28,28), cifar10 : (32,32,3)
+    nb_pixel = np.prod(img_size)
+    threshold = int(nb_pixel * (1-ratio))
+    # rank indice
+    re_sal_maps = saliency_maps.reshape(saliency_maps.shape[0], -1)
+    indice = re_sal_maps.argsort().argsort()
+    # get mask
+    if eval_method=='ROAR':
+        mask = indice < threshold
+    elif eval_method=='KAR':
+        mask = indice >= threshold
+    mask = mask.reshape(data.shape)
+    # remove
+    trainloader.dataset.data = (data * mask).reshape(data.shape)
+    
+    return trainloader       
 
 
 
@@ -292,6 +228,7 @@ def selecticity_evaluation(args):
                                      target=args.target, 
                                      batch_size=args.batch_size,
                                      method=args.method, 
-                                     sample_pct=args.sample_pct)
+                                     sample_pct=args.ratio)
     # evaluation
     selectivity_method.eval(args.steps)
+

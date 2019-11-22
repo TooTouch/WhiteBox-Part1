@@ -1,6 +1,7 @@
 import numpy as np # array
 import json # history
 import os # directory
+import h5py # save files
 
 # pytorch 
 import torch
@@ -11,7 +12,7 @@ import torch.nn.functional as F
 import torchvision.models as models
 
 # defined function
-from saliency.evaluation_methods import selecticity_evaluation
+from saliency.evaluation_methods import Selectivity, adjust_image
 from dataload import mnist_load, cifar10_load
 from model import SimpleCNN
 from utils import seed_everything, ModelTrain, ModelTest
@@ -19,19 +20,20 @@ from utils import seed_everything, ModelTrain, ModelTest
 # arguments
 import argparse
 
-def main(args):
+def main(args, **kwargs):
     # Config
     epochs = args.epochs
-    batch_size = args.batch_size # mnist 128, cifar10 128
+    batch_size = args.batch_size 
     valid_rate = args.valid_rate
-    lr = args.lr # mnist 0.01, cifar10 0.01
+    lr = args.lr 
     verbose = args.verbose
 
     target = args.target
     monitor = args.monitor
     mode = args.mode
 
-    model_name = 'simple_cnn_{}'.format(target) # simple_cnn_{}
+    model_name = 'simple_cnn_{}'.format(target)
+
     savedir = '../checkpoint'
     logdir = '../logs'
 
@@ -66,15 +68,25 @@ def main(args):
         trainloader, validloader, testloader = cifar10_load(batch_size=batch_size,
                                                             validation_rate=valid_rate,
                                                             shuffle=True)
+
+    if (args.eval=='ROAR') or (args.eval=='KAR'):
+        # saliency map load
+        hf = h5py.File(f'../saliency_maps/[{args.target}]{args.method}_train.hdf5','r')
+        sal_maps = np.array(hf['saliencys'])
+        # adjust image 
+        data_lst = adjust_image(kwargs['ratio'], trainloader, sal_maps, args.eval)
+        # hdf5 close
+        hf.close()                     
+        # model name
+        model_name = model_name + '_{0:}_{1:}{2:.1f}'.format(args.method, args.eval, kwargs['ratio'])
     
     print('=====Model Load=====')
     # Load model
     net = SimpleCNN(target).to(device)
     print()
 
-
     # Model compile
-    optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) # MNIST
+    optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) 
     criterion = nn.CrossEntropyLoss()
 
     # Train
@@ -91,13 +103,14 @@ def main(args):
                             validation=validloader,
                             verbose=verbose)
     # Test
-    ModelTest(model=net,
-              data=testloader,
-              loaddir=savedir,
-              model_name=model_name,
-              device=device)
+    modeltest = ModelTest(model=net,
+                          data=testloader,
+                          loaddir=savedir,
+                          model_name=model_name,
+                          device=device)
+ 
+    modeltrain.history['test_result'] = modeltest.results
 
-    
     # History save as json file
     if not(os.path.isdir(logdir)):
         os.mkdir(logdir)
@@ -112,35 +125,54 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(help='Train or Evaluation')
 
     # Train
-    parser_train = subparsers.add_parser('train', help='train help')
-    parser_train.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
-    parser_train.add_argument('--epochs', type=int, default=300, help='number of epochs')
-    parser_train.add_argument('--batch_size', type=int, default=128, help='number of batch')
-    parser_train.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
-    parser_train.add_argument('--lr', type=float, default=0.01, help='learning rate')
-    parser_train.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
-    parser_train.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
-    parser_train.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
+    parser.add_argument('--train', action='store_true', help='train mode')
+    parser.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
+    parser.add_argument('--epochs', type=int, default=300, help='number of epochs')
+    parser.add_argument('--batch_size', type=int, default=128, help='number of batch')
+    parser.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
+    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
+    parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
+    parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
+    parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
     
     # Evaluation
-    parser_eval = subparsers.add_parser('eval', help='eval help')
-    parser_eval.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
-    parser_eval.add_argument('--method', type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
-    parser_eval.add_argument('--attr_method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet'], help='select attribution method')
-    parser_eval.add_argument('--steps', type=int, default=50, help='number of evaluation')
-    parser_eval.add_argument('--sample_pct', type=float, default=0.1, help='sample ratio')
-    parser_eval.add_argument('--batch_size', type=int, default=128, help='number of batch')
-    parser_eval.add_argument('--save_dir', type=str, help='save directory')
+    parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
+    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GB-GC','DeconvNet'], help='select attribution method')
+    parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
+    parser.add_argument('--ratio', type=float, default=0.1, help='ratio whatever')
     args = parser.parse_args()
 
     # TODO : Tensorboard Check
 
     # python main.py --train --target=['mnist','cifar10']
-    main(args=args)
+    if args.train:
+        main(args=args)
+    elif args.eval=='selectivity':
+        # make evalutation directory
+        if not os.path.isdir('../evaluation'):
+            os.mkdir('../evaluation')
+
+        # pretrained model load
+        weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(args.target))
+        model = SimpleCNN(args.target)
+        model.load_state_dict(weights['model'])
+
+        # selectivity evaluation
+        selectivity_method = Selectivity(model=model, 
+                                         target=args.target, 
+                                         batch_size=args.batch_size,
+                                         method=args.method, 
+                                         sample_pct=args.ratio)
+        # evaluation
+        selectivity_method.eval(steps=args.steps, savedir='../evaluation')
+
+    elif (args.eval=='ROAR') or (args.eval=='KAR'):
+        # ratio
+        ratio_lst = np.arange(0, 1, args.ratio)[1:] # exclude zero
+        for ratio in ratio_lst:
+            main(args=args, ratio=ratio)
+        
     
-    # if args.method=='selectivity':
-    #     selecticity_evaluation(args)
-    # else:
         
 
 
