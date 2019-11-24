@@ -58,6 +58,9 @@ Architecture | MNIST | CIFAR-10
 
 # Results
 ## Coherence
+
+Coherence is a qualitative evaluation method that shows the importance of images. Attributions should fall on discriminative features (e.g. the object of interest).
+
 **MNIST**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_mnist.jpg)
 
