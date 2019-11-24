@@ -65,6 +65,13 @@ Architecture | MNIST | CIFAR-10
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg)
 
 ## Selectivity
+Selecticity is a method for quantitative evaluation of the attribution methods. The evaluation method is largely divided into two courses. First, the feature map for the image is created and the most influential part is deleted from the image. The second is to create the feature map again with the modified image and repeat the first process. 
+
+As a result, IB, GB and GB-GC were the most likely ways to degrade the performance of models for the two datasets.
+
+
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/models/selectivity.png)
+
 **MNIST**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_mnist.jpg)
 
