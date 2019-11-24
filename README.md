@@ -62,10 +62,14 @@ Architecture | MNIST | CIFAR-10
 Coherence is a qualitative evaluation method that shows the importance of images. Attributions should fall on discriminative features (e.g. the object of interest).
 
 **MNIST**  
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_mnist.jpg)
+<p align="center">
+  <img src="https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_mnist.jpg" alt="mnist_coherence" width="700"/>
+</p>
 
 **CIFAR-10**  
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg)
+<p align="center">
+  <img src="https://github.com/bllfpc/WhiteBox/blob/master/images/results/coherence_cifar10.jpg" alt="cifar10_coherence" width="700"/>
+ </p>
 
 ## Selectivity
 Selecticity is a method for quantitative evaluation of the attribution methods. The evaluation method is largely divided into two courses. First, the feature map for the image is created and the most influential part is deleted from the image. The second is to create the feature map again with the modified image and repeat the first process. 
