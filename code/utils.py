@@ -431,7 +431,7 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
         attr_method_dict[attr_method]['data'] = hf
 
     # Accuracy Change by Methods
-    f, ax = plt.subplots(1,len(methods), figsize=kwargs['size'])
+    f, ax = plt.subplots(1,len(methods)+1, figsize=kwargs['size'])
     for i in range(len(methods)):
         method = methods[i]
         # results load
@@ -447,6 +447,7 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
     ax[0].set_xlabel('# pixel removed', size=kwargs['fontsize'])
     ax[0].set_ylabel('Accuracy', size=kwargs['fontsize'])
     ax[0].set_title('[{}] Accuracy Change\nby Methods'.format(target.upper()), size=kwargs['fontsize'])
+    ax[0].set_ylim([0,1])
 
     # Score Change by Methods
     for i in range(len(methods)):
@@ -463,12 +464,13 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
         sample_idx = np.random.choice(score.shape[1], 100, replace=False)
         sample_score = score[:,sample_idx]
         # plotting
-        for i in range(100):
-            ax[i+1].plot(range(steps+1), sample_score[:,i], color=kwargs['color'][i], linewidth=0.1)
+        for j in range(100):
+            ax[i+1].plot(range(steps+1), sample_score[:,j], color=kwargs['color'][i], linewidth=0.1)
         # text
         ax[i+1].set_xlabel('# pixel removed', size=kwargs['fontsize'])
         ax[i+1].set_ylabel('Score for correct class', size=kwargs['fontsize'])
         ax[i+1].set_title('[{}] {}\nScore Change'.format(target.upper(), method), size=kwargs['fontsize'])
+        ax[i+1].set_ylim([0,1])
         # close
         hf.close()
 

@@ -121,5 +121,8 @@ practice.ipynb
 # saliency_maps
 saliency_maps/
 
-# ROAR checkpoint
+# ROAR&KAR checkpoint and log
 checkpoint/*ROAR*.pth
+logs/*ROAR*.txt
+checkpoint/*KAR*.pth
+logs/*KAR*.txt
