@@ -98,11 +98,10 @@ As a result, IB, GB and GB-GC were the most likely attribution methods to degrad
 
 ## ROAR/KAR
 ROAR/KAR is a method for quantitative evaluation of the attribution methods that how the performance of the classifier changes as features are removed based on the attribution method. 
-- ROAR : replace N% of pixels estimated to be *most* important
+- ROAR : replace N% of pixels estimated to be *most* important [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20ROAR%26KAR.ipynb)]
 - KAR : replace N% of pixels estimated to be *least* important
 - Retrain Model and measure change in test accuracy
 
-[[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20ROAR%26KAR.ipynb)]
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg)
 
 
