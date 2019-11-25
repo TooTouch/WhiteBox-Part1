@@ -36,13 +36,13 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 
 # Saliency Maps
 **Attribution Methods**
-- [Vanilla Backpropagation (VBP)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Vanilla%20Backpropagation%20%26%20Ensemble.ipynb)
-- [Input x Backpropagation (IB)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Input%20x%20Backpropagation%20%26%20Ensemble.ipynb)
-- [DeconvNet](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20DeconvNet%20%26%20Ensemble.ipynb) [1]
-- [Integrated Gradients (IG)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Integrated%20Gradients%20%26%20Ensemble.ipynb) [3]
-- [Guided Backpropagation (GB)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided%20Backpropagation%20%26%20Ensemble.ipynb) [2]
-- [Grad-CAM (GC)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20GradCAM%20%26%20Ensemble.ipynb) [4]
-- [Guided Grad-CAM (GB-GC)](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided-GradCAM%20%26%20Ensemble.ipynb) [4]
+- Vanilla Backpropagation (VBP) [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Vanilla%20Backpropagation%20%26%20Ensemble.ipynb)]
+- Input x Backpropagation (IB) [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Input%20x%20Backpropagation%20%26%20Ensemble.ipynb)]
+- DeconvNet [1] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20DeconvNet%20%26%20Ensemble.ipynb)]
+- Integrated Gradients (IG) [3] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Integrated%20Gradients%20%26%20Ensemble.ipynb)]
+- Guided Backpropagation (GB) [2] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided%20Backpropagation%20%26%20Ensemble.ipynb)]
+- Grad-CAM (GC) [4] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20GradCAM%20%26%20Ensemble.ipynb)]
+- Guided Grad-CAM (GB-GC) [4] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided-GradCAM%20%26%20Ensemble.ipynb)]
 
 **Ensemble Methods**
 - SmoothGrad (SG) [5]
@@ -57,13 +57,15 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 
 # Experiments
 ## Model Architecture & Performance
+[[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Model%20Performance.ipynb)]
 
 Architecture | MNIST | CIFAR-10
 ---|---|---
 <img src="https://github.com/bllfpc/WhiteBox/blob/master/images/models/simple_cnn_architecture.png" alt="simple_cnn_architecture" width="200"/> | ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/mnist_acc_loss_plot.png) | ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/cifar10_acc_loss_plot.png)
 
 # Evaluation Results
-## Coherence
+## Coherence 
+[[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Coherence.ipynb)]
 
 Coherence is a qualitative evaluation method that shows the importance of images. Attributions should fall on discriminative features (e.g. the object of interest).
 
@@ -78,6 +80,8 @@ Coherence is a qualitative evaluation method that shows the importance of images
  </p>
 
 ## Selectivity
+[[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Selectivity.ipynb)]
+
 Selecticity is a method for quantitative evaluation of the attribution methods. The evaluation method is largely divided into two courses. First, the feature map for the image is created and the most influential part is deleted from the image. The second is to create the feature map again with the modified image and repeat the first process. 
 
 As a result, IB, GB and GB-GC were the most likely attribution methods to degrade the performance of models for the two datasets.
@@ -93,12 +97,12 @@ As a result, IB, GB and GB-GC were the most likely attribution methods to degrad
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_cifar10.jpg)
 
 ## ROAR/KAR
-
 ROAR/KAR is a method for quantitative evaluation of the attribution methods that how the performance of the classifier changes as features are removed based on the attribution method. 
 - ROAR : replace N% of pixels estimated to be *most* important
 - KAR : replace N% of pixels estimated to be *least* important
 - Retrain Model and measure change in test accuracy
 
+[[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20ROAR.ipynb)]
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg)
 
 
