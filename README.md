@@ -80,7 +80,7 @@ Coherence is a qualitative evaluation method that shows the importance of images
 ## Selectivity
 Selecticity is a method for quantitative evaluation of the attribution methods. The evaluation method is largely divided into two courses. First, the feature map for the image is created and the most influential part is deleted from the image. The second is to create the feature map again with the modified image and repeat the first process. 
 
-As a result, IB, GB and GB-GC were the most likely ways to degrade the performance of models for the two datasets.
+As a result, IB, GB and GB-GC were the most likely attribution methods to degrade the performance of models for the two datasets.
 
 <p align="center">
   <img src="https://github.com/bllfpc/WhiteBox/blob/master/images/models/selectivity.PNG" alt="selectivity" width="400"/>
