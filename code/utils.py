@@ -369,3 +369,35 @@ def rescale_image(images):
     return images
 
 
+def calc_accuracy(model, data, true, idx2class, device='cpu'):
+    # ture type must be numpy array
+    indices_by_idx = dict((idx, np.where(true==idx)) for idx in range(10))
+    
+    # test
+    model.to(device)
+    model.eval()
+    pred_lst = []
+    with torch.no_grad():
+        for inputs, targets in data:
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs).detach()
+            
+            _, predicted = outputs.max(1)
+            pred_lst.extend(predicted.cpu().numpy())
+    
+    pred = np.array(pred_lst)
+    
+    for idx in range(10):
+        indices = indices_by_idx[idx]
+        true_idx = true[indices]
+        pred_idx = pred[indices]
+        correct = np.sum(true_idx == pred_idx)
+        acc_idx = correct / true_idx.size
+        
+        print("Class [{0:10s}] accuracy : {1:.2%}".format(idx2class[idx], acc_idx))
+        
+    total_acc = np.sum(true==pred) / true.shape[0]
+    print()
+    print('Total accuracy: {0:.2%}'.format(total_acc))
+    
+    return total_acc

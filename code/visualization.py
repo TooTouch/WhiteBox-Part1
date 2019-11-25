@@ -154,7 +154,7 @@ def visualize_ROARnKAR(targets, methods, ratio_lst, eval_method, savedir=None, *
         ax[i].set_ylabel('Accuracy', size=fontsize)
         ax[i].set_xlabel('# of remove ratio', size=fontsize)
         ax[i].set_xlim([0,1])
-        ax[i].legend()
+        ax[i].legend(loc='upper right')
     if savedir:
         plt.tight_layout()
         plt.savefig(savedir, dpi=dpi)
@@ -246,3 +246,27 @@ def visualize_coherence(dataset, images, pre_images, targets, idx2classes, model
     if savedir:
         plt.tight_layout()
         plt.savefig(savedir,dpi=dpi)
+
+
+def visualize_trainlogs(train, valid, title, savedir=None, **kwargs):
+    # initialize
+    fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
+    size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
+    dpi = None if 'dpi' not in kwargs.keys() else kwargs['dpi']
+
+    f, ax = plt.subplots(figsize=size)
+    ax2 = ax.twinx()
+    
+    ax.plot(np.arange(len(train['acc'])), train['acc'], label='Train Acc', color='r')
+    ax.plot(np.arange(len(valid['acc'])), valid['acc'], label='Valid Acc', color='c')
+    ax2.plot(np.arange(len(train['loss'])), train['loss'], label='Train Loss', color='g')
+    ax2.plot(np.arange(len(valid['loss'])), valid['loss'], label='Valid Loss', color='b')
+    
+    plt.title(title, size=fontsize)
+    ax.legend(loc='upper right', fontsize=fontsize-2)
+    ax2.legend(loc='lower right', fontsize=fontsize-2)
+
+    if savedir:
+        plt.tight_layout()
+        plt.savefig(savedir, dpi=dpi)
+
