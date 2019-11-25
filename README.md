@@ -24,7 +24,7 @@ python main.py --train --target=['mnist','cifar10']
 python main.py --eval=selectivity --target=['mnist','cifar10'] --method=['VGB','IB','DeconvNet','IG','GB','GC','GBGC']
 ```
 
-**Model ROAR & KAR Evaluation**
+**Model ROAR & KAR Evaluation**  
 For ROAR and KAR, the saliency map of each attribution methods that you want to evaluate must be saved prior to the evaluation.
 ```
 python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB','IB','DeconvNet','IG','GB','GC','GBGC']
