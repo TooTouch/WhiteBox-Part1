@@ -52,8 +52,8 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 # Evaluation Methods
 - Coherence
 - Selectivity
-- ROAR [6]
-- KAR [6]
+- Remove and Retrain (ROAR) [6]
+- Keep and Retrain (KAR) [6]
 
 # Experiments
 ## Model Architecture & Performance
@@ -91,6 +91,16 @@ As a result, IB, GB and GB-GC were the most likely attribution methods to degrad
 
 **CIFAR-10**  
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/score_acc_change_cifar10.jpg)
+
+## ROAR/KAR
+
+ROAR/KAR is a method for quantitative evaluation of the attribution methods that how the performance of the classifier changes as features are removed based on the attribution method. 
+- ROAR : replace N% of pixels estimated to be *most* important
+- KAR : replace N% of pixels estimated to be *least* important
+- Retrain Model and measure change in test accuracy
+
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg)
+
 
 # Reference
 - [1] Zeiler, M. D., & Fergus, R. (2014, September). [Visualizing and understanding convolutional networks](https://arxiv.org/abs/1311.2901). In European conference on computer vision (pp. 818-833). Springer, Cham. ([Korean version](https://www.notion.so/tootouch/Visualizing-and-Understanding-Convolutional-Networks-4f396791212846439881575513271407))
