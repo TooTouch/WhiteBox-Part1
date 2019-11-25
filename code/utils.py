@@ -1,6 +1,5 @@
 import torch
 
-import h5py
 import random
 import os
 import numpy as np
@@ -9,8 +8,6 @@ import datetime
 
 from dataload import mnist_load, cifar10_load
 from model import SimpleCNN
-
-import matplotlib.pyplot as plt
 
 def seed_everything(seed=223):
     random.seed(seed)
@@ -372,111 +369,3 @@ def rescale_image(images):
     return images
 
 
-def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, target, **kwargs):
-    # initialize
-    row = kwargs['row']
-    col = kwargs['col']
-    size = kwargs['size']
-    fontsize = kwargs['fontsize']
-    labelsize = kwargs['labelsize']
-    
-    if target=='mnist':
-        origin_imgs= origin_imgs.squeeze()
-        for i in range(len(results)):
-            results[i] = results[i].squeeze()
-        color = 'gray'
-    else:
-        color = None
-            
-    f, ax = plt.subplots(row, col, figsize=size)
-    # original images
-    for i in range(row):
-        ax[i,0].imshow(origin_imgs[i], color)
-        ax[i,0].set_ylabel('True: {0:}\nPred: {1:} ({2:.2%})'.format(classes[i], int(preds[i]), probs[i]), size=labelsize)
-        ax[i,0].set_xticks([])
-        ax[i,0].set_yticks([])
-        # set title
-        if i == 0:
-            ax[i,0].set_title('Original Image', size=fontsize)
-
-    for i in range(row*(col-1)):
-        r = i//(col-1)
-        c = i%(col-1)
-        ax[r,c+1].imshow(results[c][r], color)
-        ax[r,c+1].axis('off')
-        # set title
-        if r == 0:
-            ax[r,c+1].set_title(names[c], size=fontsize)
-
-    plt.subplots_adjust(wspace=-0.5, hspace=0)
-    plt.tight_layout()
-
-
-def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs):
-    # initialize
-    kwargs['fontsize'] = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
-    kwargs['size'] = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
-    kwargs['color'] = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'] if 'color' not in kwargs.keys() else kwargs['color']
-    kwargs['random_state'] = 223 if 'random_state' not in kwargs.keys() else kwargs['random_state']
-    kwargs['dpi'] = None if 'dpi' not in kwargs.keys() else kwargs['dpi']
-
-    # set results dictionary by attribution methods
-    attr_method_dict = {}
-    for i in range(len(methods)):    
-        attr_method_dict[methods[i]] = {'data':[]}
-
-    # results load
-    for attr_method in attr_method_dict.keys():
-        hf = h5py.File(f'../evaluation/{target}_{attr_method}_steps{steps}_ckp5_sample{sample_pct}.hdf5', 'r')
-        attr_method_dict[attr_method]['data'] = hf
-
-    # Accuracy Change by Methods
-    f, ax = plt.subplots(1,len(methods)+1, figsize=kwargs['size'])
-    for i in range(len(methods)):
-        method = methods[i]
-        # results load
-        hf = h5py.File(f'../evaluation/{target}_{method}_steps{steps}_ckp5_sample{sample_pct}.hdf5', 'r')
-        # acc
-        acc = np.array(hf['acc'])
-        # plotting
-        ax[0].plot(range(steps+1), acc, label=method, color=kwargs['color'][i])
-        ax[0].legend()
-        # close
-        hf.close()
-    # text
-    ax[0].set_xlabel('# pixel removed', size=kwargs['fontsize'])
-    ax[0].set_ylabel('Accuracy', size=kwargs['fontsize'])
-    ax[0].set_title('[{}] Accuracy Change\nby Methods'.format(target.upper()), size=kwargs['fontsize'])
-    ax[0].set_ylim([0,1])
-
-    # Score Change by Methods
-    for i in range(len(methods)):
-        method = methods[i]
-        # results load
-        hf = h5py.File(f'../evaluation/{target}_{method}_steps{steps}_ckp5_sample{sample_pct}.hdf5', 'r')
-        # score
-        score = np.array(hf['score'])
-        mean_score = np.mean(score, axis=1)
-        # plotting average score
-        ax[i+1].plot(range(steps+1), mean_score, label=method, color=kwargs['color'][i], linewidth=4)
-        # sample index
-        np.random.seed(kwargs['random_state'])
-        sample_idx = np.random.choice(score.shape[1], 100, replace=False)
-        sample_score = score[:,sample_idx]
-        # plotting
-        for j in range(100):
-            ax[i+1].plot(range(steps+1), sample_score[:,j], color=kwargs['color'][i], linewidth=0.1)
-        # text
-        ax[i+1].set_xlabel('# pixel removed', size=kwargs['fontsize'])
-        ax[i+1].set_ylabel('Score for correct class', size=kwargs['fontsize'])
-        ax[i+1].set_title('[{}] {}\nScore Change'.format(target.upper(), method), size=kwargs['fontsize'])
-        ax[i+1].set_ylim([0,1])
-        # close
-        hf.close()
-
-    # figure adjust
-    plt.subplots_adjust(wspace=-0.5, hspace=0)
-    plt.tight_layout()
-    
-    # save
-    plt.savefig(save_dir,dpi=kwargs['dpi'])

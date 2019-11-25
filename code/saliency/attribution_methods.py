@@ -65,8 +65,8 @@ class IntegratedGradients(object):
         # evaluation mode
         self.model.eval()
 
-    def generate_images_on_linear_path(self, input_images, **kwargs):
-        step_list = np.arange(kwargs['steps']+1)/kwargs['steps']
+    def generate_images_on_linear_path(self, input_images, steps):
+        step_list = np.arange(steps+1)/steps
         xbar_list = [input_images*step for step in step_list]
         return xbar_list 
 
@@ -85,15 +85,15 @@ class IntegratedGradients(object):
         return (imgs, probs.numpy(), preds.numpy())
 
     def generate_image(self, pre_imgs, targets, **kwargs):
-        if 'steps' not in kwargs.keys():
-            kwargs['steps'] = 10
+        # default
+        steps = 10 if 'steps' not in kwargs.keys() else kwargs['steps']
 
-        xbar_list = self.generate_images_on_linear_path(pre_imgs, **kwargs)
+        xbar_list = self.generate_images_on_linear_path(pre_imgs, steps)
         sal_maps = np.zeros(pre_imgs.size())
 
         for xbar_image in xbar_list:
             single_integrated_grad, probs, preds = self.generate_gradients(xbar_image, targets)
-            sal_maps = sal_maps + (single_integrated_grad/kwargs['steps'])
+            sal_maps = sal_maps + (single_integrated_grad/steps)
             
         sal_maps = rescale_image(sal_maps)
         
@@ -208,8 +208,9 @@ class GradCAM(object):
             layer.register_backward_hook(partial(hook_backward, key=idx))
             
     def generate_image(self, pre_imgs, targets, **kwargs):
-        if 'color' not in kwargs.keys():
-            kwargs['color'] = False
+        # default
+        layer = 8 if 'layer' not in kwargs.keys() else kwargs['layer']
+        color = False if 'color' not in kwargs.keys() else kwargs['color']
 
         pre_imgs = Variable(pre_imgs, requires_grad=True)
         outputs = self.model(pre_imgs)
@@ -220,10 +221,10 @@ class GradCAM(object):
         outputs.backward(gradient=one_hot_output)
         probs, preds = outputs.detach().max(1)
 
-        gradients = self.gradients[kwargs['layer']].numpy()
+        gradients = self.gradients[layer].numpy()
         
         # A = w * conv_output
-        convs = self.conv_outputs[kwargs['layer']].detach().numpy()
+        convs = self.conv_outputs[layer].detach().numpy()
         weights = np.mean(gradients, axis=(2,3))
         weights = weights.reshape(weights.shape + (1,1,))
 
@@ -254,7 +255,7 @@ class GradCAM(object):
             
             return img
 
-        colors = [kwargs['color']] * gradcams.shape[0]
+        colors = [color] * gradcams.shape[0]
         gradcams = np.array(list(map(resize_image, gradcams, pre_imgs, colors)))
 
         return (gradcams, probs.numpy(), preds.numpy())
@@ -303,16 +304,19 @@ class DeconvNet(object):
             layer.register_forward_hook(partial(hook, key=idx))
 
     def generate_image(self, pre_imgs, targets, **kwargs):
+        # default
+        layer = 0 if 'layer' not in kwargs.keys() else kwargs['layer']
+
         # prediction
         outputs = self.model(pre_imgs).detach()
         probs, preds = outputs.max(1)
         
         # feature size
-        num_feat = self.model.feature_maps[kwargs['layer']].shape[1]
-        new_feat_map = self.model.feature_maps[kwargs['layer']].clone()
+        num_feat = self.model.feature_maps[layer].shape[1]
+        new_feat_map = self.model.feature_maps[layer].clone()
 
         # output deconvnet
-        deconv_outputs = self.deconv_model(self.model.feature_maps[kwargs['layer']], kwargs['layer'], self.model.pool_locs)
+        deconv_outputs = self.deconv_model(self.model.feature_maps[layer], layer, self.model.pool_locs)
 
         # denormalization
         deconv_outputs = deconv_outputs.data.numpy()
@@ -347,13 +351,12 @@ class GuidedGradCAM(object):
         self.GB_model = GuidedBackprop(model)
 
     def generate_image(self, pre_imgs, targets, **kwargs):
-        if 'layer' not in kwargs.keys():
-            kwargs['layer'] = 8
-        if 'color' not in kwargs.keys():
-            kwargs['color'] = False
+        # default
+        layer = 8 if 'layer' not in kwargs.keys() else kwargs['layer']        
+        color = False if 'color' not in kwargs.keys() else kwargs['color']
 
-        output_GC, probs, preds = self.GC_model.generate_image(pre_imgs, targets, **kwargs)
-        output_GB, _, _ = self.GB_model.generate_image(pre_imgs, targets, **kwargs)
+        output_GC, probs, preds = self.GC_model.generate_image(pre_imgs, targets, layer=layer, color=color)
+        output_GB, _, _ = self.GB_model.generate_image(pre_imgs, targets)
 
         sal_maps = np.multiply(output_GC, output_GB)
         sal_maps = rescale_image(sal_maps.transpose(0,3,1,2))
