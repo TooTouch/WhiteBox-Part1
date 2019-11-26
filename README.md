@@ -104,6 +104,7 @@ ROAR/KAR is a method for quantitative evaluation of the attribution methods that
 
 [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20ROAR%26KAR.ipynb)]
 ![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg)
+![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/KAR_result.jpg)
 
 
 # Reference

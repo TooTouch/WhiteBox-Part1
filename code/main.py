@@ -28,15 +28,21 @@ def main(args, **kwargs):
     lr = args.lr 
     verbose = args.verbose
 
+    # checkpoint
     target = args.target
     monitor = args.monitor
     mode = args.mode
 
+    # save name
     model_name = 'simple_cnn_{}'.format(target)
+    if args.attention:
+        model_name = f'{model_name}_{args.attention}'
 
+    # save directory
     savedir = '../checkpoint'
     logdir = '../logs'
 
+    # device setting cpu or cuda(gpu)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('=====Setting=====')
@@ -82,7 +88,7 @@ def main(args, **kwargs):
     
     print('=====Model Load=====')
     # Load model
-    net = SimpleCNN(target).to(device)
+    net = SimpleCNN(target, args.attention).to(device)
     print()
 
     # Model compile
@@ -117,9 +123,6 @@ def main(args, **kwargs):
     with open(f'{logdir}/{model_name}_logs.txt','w') as outfile:
         json.dump(modeltrain.history, outfile)
 
-
-    
-    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Train or Evaluation')
@@ -134,6 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
     parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
     parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
+    parser.add_argument('--attention', type=str, default=None, choices=['CBAM'], help='choice attention method')
     
     # Evaluation
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
@@ -142,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('--ratio', type=float, default=0.1, help='ratio whatever')
     args = parser.parse_args()
 
-    # TODO : Tensorboard Check
+    # TODO: Tensorboard Check
 
     # python main.py --train --target=['mnist','cifar10']
     if args.train:
