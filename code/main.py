@@ -75,6 +75,7 @@ def main(args, **kwargs):
                                                             validation_rate=valid_rate,
                                                             shuffle=True)
 
+    # ROAR or KAR
     if (args.eval=='ROAR') or (args.eval=='KAR'):
         # saliency map load
         hf = h5py.File(f'../saliency_maps/[{args.target}]{args.method}_train.hdf5','r')
