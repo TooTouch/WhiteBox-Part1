@@ -102,8 +102,8 @@ ROAR/KAR is a method for quantitative evaluation of the attribution methods that
 - KAR : replace N% of pixels estimated to be *least* important
 - Retrain Model and measure change in test accuracy
 
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg)
-![](https://github.com/bllfpc/WhiteBox/blob/master/images/results/KAR_result.jpg)
+<p align="center"><img src="https://github.com/bllfpc/WhiteBox/blob/master/images/results/ROAR_result.jpg" width="600" /></p>
+<p align="center"><img src="https://github.com/bllfpc/WhiteBox/blob/master/images/results/KAR_result.jpg" width="600" /></p>
 
 
 # Reference
