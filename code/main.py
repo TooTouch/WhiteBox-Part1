@@ -138,7 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
     parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
     parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
-    parser.add_argument('--attention', type=str, default=None, choices=['CBAM'], help='choice attention method')
+    parser.add_argument('--attention', type=str, default=None, choices=['CBAM','CAM'], help='choice attention method')
     
     # Evaluation
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
@@ -149,9 +149,10 @@ if __name__ == '__main__':
 
     # TODO: Tensorboard Check
 
-    # python main.py --train --target=['mnist','cifar10']
+    # python main.py --train --target=['mnist','cifar10'] --attention=['CBAM','CAM']
     if args.train:
         main(args=args)
+        
     elif args.eval=='selectivity':
         # make evalutation directory
         if not os.path.isdir('../evaluation'):
