@@ -126,7 +126,6 @@ def main(args, **kwargs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='Train or Evaluation')
 
     # Train
     parser.add_argument('--train', action='store_true', help='train mode')
