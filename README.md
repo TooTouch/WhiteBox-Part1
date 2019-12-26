@@ -39,8 +39,8 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 - Vanilla Backpropagation (VBP) [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Vanilla%20Backpropagation%20%26%20Ensemble.ipynb)]
 - Input x Backpropagation (IB) [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Input%20x%20Backpropagation%20%26%20Ensemble.ipynb)]
 - DeconvNet [1] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20DeconvNet%20%26%20Ensemble.ipynb)]
-- Integrated Gradients (IG) [3] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Integrated%20Gradients%20%26%20Ensemble.ipynb)]
 - Guided Backpropagation (GB) [2] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided%20Backpropagation%20%26%20Ensemble.ipynb)]
+- Integrated Gradients (IG) [3] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Integrated%20Gradients%20%26%20Ensemble.ipynb)]
 - Grad-CAM (GC) [4] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20GradCAM%20%26%20Ensemble.ipynb)]
 - Guided Grad-CAM (GB-GC) [4] [[Notebook](https://github.com/bllfpc/WhiteBox-Part1/blob/master/notebook/%5BAttribution%5D%20-%20Guided-GradCAM%20%26%20Ensemble.ipynb)]
 
