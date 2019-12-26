@@ -35,8 +35,6 @@ def main(args, **kwargs):
 
     # save name
     model_name = 'simple_cnn_{}'.format(target)
-    if args.attention:
-        model_name = f'{model_name}_{args.attention}'
 
     # save directory
     savedir = '../checkpoint'
@@ -89,7 +87,7 @@ def main(args, **kwargs):
     
     print('=====Model Load=====')
     # Load model
-    net = SimpleCNN(target, args.attention).to(device)
+    net = SimpleCNN(target).to(device)
     print()
 
     # Model compile
@@ -137,8 +135,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', type=bool, default=1, choices=range(1,11), help='model evalutation display period')
     parser.add_argument('--monitor', type=str, default='acc',choices=['acc','loss'], help='monitor value')
     parser.add_argument('--mode', type=str, default='max', choices=['max','min'], help='min or max')
-    parser.add_argument('--attention', type=str, default=None, choices=['CBAM','CAM'], help='choice attention method')
-    
+   
     # Evaluation
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
     parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet'], help='select attribution method')
@@ -148,7 +145,7 @@ if __name__ == '__main__':
 
     # TODO: Tensorboard Check
 
-    # python main.py --train --target=['mnist','cifar10'] --attention=['CBAM','CAM']
+    # python main.py --train --target=['mnist','cifar10']
     if args.train:
         main(args=args)
         

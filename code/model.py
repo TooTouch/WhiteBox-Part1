@@ -3,13 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from collections import OrderedDict
-from saliency.attention import CBAM, CAM
 
 class SimpleCNN(nn.Module):
-    def __init__(self, target, attention=None):
+    def __init__(self, target):
         super(SimpleCNN, self).__init__()
-        # CBAM attention method
-        self.attention = attention
         # nb_channel and FCN size
         if target=='mnist':
             in_channels = 1
@@ -48,15 +45,6 @@ class SimpleCNN(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        # Attention Modules
-        if self.attention == 'CBAM':
-            cbam1 = CBAM(32).to('cuda') # TODO: 왜 to.('cuda')를 지우면 에러가 날까
-            cbam2 = CBAM(64).to('cuda')
-            cbam3 = CBAM(128).to('cuda')
-            self.cbam = [cbam1, cbam2, cbam3]
-        elif self.attention == 'CAM':
-            self.cam = CAM(128, 10).to('cuda')
-
         print('Model Complete')
 
     
@@ -65,18 +53,11 @@ class SimpleCNN(nn.Module):
         for idx, layer in enumerate(self.features):
             if isinstance(layer, nn.MaxPool2d):
                 x, location = layer(x)
-            elif isinstance(layer, nn.BatchNorm2d) and (self.attention=='CBAM'): # CBAM
-                x = self.cbam[nb_layer](x)
-                x = layer(x)
-                nb_layer += 1
             else:
                 x = layer(x)
 
-        if self.attention=='CAM': # CAM
-            output = self.cam(x)
-        else: # original
-            x = x.view(x.size(0), -1)
-            output = self.classifier(x)
+        x = x.view(x.size(0), -1)
+        output = self.classifier(x)
 
         return output
 
