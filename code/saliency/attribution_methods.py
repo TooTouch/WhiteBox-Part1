@@ -276,7 +276,7 @@ class GradCAM(object):
 
         # relu
         gradcams = np.maximum(gradcams, 0)
-
+        
         # minmax scaling * 255
         mins = gradcams.min(axis=(1,2))
         mins = mins.reshape(mins.shape + (1,1,))
