@@ -126,3 +126,6 @@ checkpoint/*ROAR*.pth
 logs/*ROAR*.txt
 checkpoint/*KAR*.pth
 logs/*KAR*.txt
+
+# nohup
+script/*.out
