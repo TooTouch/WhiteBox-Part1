@@ -57,10 +57,10 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 
 # Soft Attention Methods
 **Modules**
-- Class Activation Methods (CAM) [7]
-- Convolutional Block Attention Module (CBAM) [8]
+- Convolutional Block Attention Module (CBAM) [7]
 
 **Models**
+- Class Activation Methods (CAM) [8]
 - Residual Attention Network (RAN) [9]
 - Wide Attention Residual Network (WARN) [10]
 
@@ -129,9 +129,9 @@ https://arxiv.org/abs/1706.03825)] [[Korean version](https://datanetworkanalysis
 
 - [6] Hooker, S., Erhan, D., Kindermans, P. J., & Kim, B. (2018). Evaluating feature importance estimates. arXiv preprint arXiv:1806.10758. [[Paper](https://arxiv.org/abs/1806.10758)] [[Korean version](https://datanetworkanalysis.github.io/2019/11/13/roar_kar)]
 
-- [7] Zhou, B., Khosla, A., Lapedriza, A., Oliva, A., & Torralba, A. (2016). Learning deep features for discriminative localization. In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 2921-2929). [[Paper](https://arxiv.org/abs/1512.04150)]
+- [7] Wang, F., Jiang, M., Qian, C., Yang, S., Li, C., Zhang, H., ... & Tang, X. (2017). Residual attention network for image classification. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 3156-3164). [[Paper](https://arxiv.org/abs/1704.06904)]
 
-- [8] Wang, F., Jiang, M., Qian, C., Yang, S., Li, C., Zhang, H., ... & Tang, X. (2017). Residual attention network for image classification. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 3156-3164). [[Paper](https://arxiv.org/abs/1704.06904)]
+- [8] Zhou, B., Khosla, A., Lapedriza, A., Oliva, A., & Torralba, A. (2016). Learning deep features for discriminative localization. In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 2921-2929). [[Paper](https://arxiv.org/abs/1512.04150)]
 
 - [9] Woo, S., Park, J., Lee, J. Y., & So Kweon, I. (2018). Cbam: Convolutional block attention module. In Proceedings of the European Conference on Computer Vision (ECCV) (pp. 3-19). [[Paper](https://arxiv.org/abs/1807.06521)]
 

@@ -8,6 +8,18 @@ from models import SimpleCNNDeconv
 import matplotlib.pyplot as plt
 
 def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, target, **kwargs):
+    '''
+    Visualize selectivity logs
+
+    Args:
+        origin_imgs: original images
+        results: saliency maps
+        probs: probability by class
+        preds: predict class
+        classes: target class
+        names: attribution method names
+        target: target dataset. ['mnist','cifar10']
+    '''
     # initialize
     row = kwargs['row']
     col = kwargs['col']
@@ -48,6 +60,15 @@ def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, targ
 
 
 def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs):
+    '''
+    Visualize selectivity logs
+
+    Args:
+        target: target dataset. ['mnist','cifar10']
+        methods: attribution methods 
+        steps: number of step
+        savedir: save path and save name
+    '''
     # initialize
     fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
     size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
@@ -118,6 +139,17 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
 
 
 def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=None, savedir=None, **kwargs):
+    '''
+    Visualize ROAR or KAR 
+
+    Args:
+        dataset: target dataset. ['mnist','cifar10']
+        ratio_lst: pixel ratio list
+        eval_method: ['ROAR','KAR']
+        methods: attribution methods 
+        attention: attention method
+        savedir: save path and save name
+    '''
     if methods==None:
         assert attention!=None, 'If methods is None, attention should not be None'
     elif attention==None:
@@ -192,6 +224,20 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
 
 
 def visualize_coherence(dataset, images, pre_images, targets, idx2classes, model, methods, savedir=None, **kwargs):
+    '''
+    Visualize coherence map that compare to attribution methods
+
+    Args:
+        dataset: target dataset. ['mnist','cifar10']
+        images: original images
+        pre_images: preprocessed images to evaluate
+        target: targets to predict
+        idx2classes: index and class dictionary
+        model: model to apply attribution methods
+        methods: attribution methods to extract saliency map
+        savedir: save path and save name
+
+    '''
     # initialize
     fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
     size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
@@ -279,6 +325,15 @@ def visualize_coherence(dataset, images, pre_images, targets, idx2classes, model
 
 
 def visualize_trainlogs(train, valid, title, savedir=None, **kwargs):
+    '''
+    Visualize training log
+
+    Args:
+        train: training logs
+        valid: validation logs
+        title: graph title
+        savedir: save path and save name
+    '''
     # initialize
     fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
     size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
@@ -300,3 +355,39 @@ def visualize_trainlogs(train, valid, title, savedir=None, **kwargs):
         plt.tight_layout()
         plt.savefig(savedir, dpi=dpi)
 
+
+
+def visualize_models_log(log_lst, model_names, train_yn, savedir=None, **kwargs):
+    '''
+    Visualize logs of models
+
+    Args:
+        log_lst: log list of models
+        model_names: model names
+        train_yn: train or validation
+        savedir: save path and save name
+    '''
+    # initialize
+    fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
+    size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
+    color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'] if 'color' not in kwargs.keys() else kwargs['color']
+    marker = ['o','v','^','s','x','*','p','d'] if 'marker' not in kwargs.keys() else kwargs['marker']
+    random_state = 223 if 'random_state' not in kwargs.keys() else kwargs['random_state']
+    dpi = None if 'dpi' not in kwargs.keys() else kwargs['dpi']
+    nb_epoch = 30 if 'nb_epoch' not in kwargs.keys() else kwargs['nb_epoch']
+    
+    metrics = {'acc':'Accuracy', 'loss':'Loss'}
+    
+    f, ax = plt.subplots(1,2, figsize=size)
+
+    for i, (k, v) in enumerate(metrics.items()):
+        for j in range(len(log_lst)):
+            m_logs = log_lst[j][train_yn][0][k]
+            ax[i].plot(np.arange(nb_epoch), m_logs[:nb_epoch], label=model_names[j], color=color[j])
+        ax[i].set_title('Comparison of mode {}'.format(train_yn), size=fontsize)
+        ax[i].set_ylabel(v, size=fontsize)
+        ax[i].set_xlabel('Epochs', size=fontsize)
+        ax[i].legend()
+    if savedir:
+        plt.tight_layout()
+        plt.savefig(savedir, dpi=dpi)

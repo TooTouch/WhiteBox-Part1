@@ -1,8 +1,9 @@
 import torch
 
+import numpy as np
+import pandas as pd 
 import random
 import os
-import numpy as np
 import time
 import datetime 
 
@@ -18,22 +19,24 @@ def seed_everything(seed=223):
     torch.backends.cudnn.deterministic = True
 
 class ModelTrain:
+    '''
+    Model Training and Validation
+    '''
     def __init__(self, model, data, epochs, criterion, optimizer, device, model_name=None, savedir=None, monitor=None, mode=None, validation=None, verbose=0):
         '''
-        params
-
-        model: training model
-        data: train dataset
-        epochs: epochs
-        criterion: critetion
-        optimizer: optimizer
-        device: [cuda:i, cpu], i=0, ...,n
-        model_name: name of model to save
-        savedir: directory to save
-        monitor: metric name or loss to check [default: None]
-        mode: [min, max] [default: None]
-        validation: test set to evaluate in train [default: None]
-        verbose: number of score print
+        Args:
+            model: training model
+            data: train dataset
+            epochs: epochs
+            criterion: critetion
+            optimizer: optimizer
+            device: device to use [cuda:i, cpu], i=0, ...,n
+            model_name: name of model to save
+            savedir: directory to save
+            monitor: metric name or loss to check [default: None]
+            mode: [min, max] [default: None]
+            validation: test set to evaluate in train [default: None]
+            verbose: number of score print
         '''
 
         self.model = model
@@ -168,15 +171,17 @@ class ModelTrain:
 
 
 class ModelTest:
+    '''
+    Model Test
+    '''
     def __init__(self, model, data, model_name, loaddir, device):
         '''
-        params
-        
-        model: training model
-        data: train dataset
-        model_name: name of model to save
-        loaddir: directory to load
-        device: [cuda:i, cpu], i=0, ...,n
+        Args:
+            model: training model
+            data: train dataset
+            model_name: name of model to save
+            loaddir: directory to load
+            device: device to use [cuda:i, cpu], i=0, ...,n
         '''
 
         self.model = model 
@@ -257,10 +262,10 @@ class CheckPoint:
         
     def model_save(self, epoch, model, score):
         '''
-        params
-        epoch: current epoch
-        model: training model
-        score: current score
+        Args
+            epoch: current epoch
+            model: training model
+            score: current score
         '''
 
         print('Save complete, epoch: {0:}: Best {1:} has changed from {2:.5f} to {3:.5f}'.format(epoch, self.monitor, self.best, score))
@@ -275,6 +280,9 @@ class CheckPoint:
 
 
 class EarlyStopping:
+    '''
+    Model early stopping
+    '''
     def __init__(self, patience, factor=0.001):
         self.patience = patience
         self.factor = factor
@@ -297,16 +305,18 @@ class EarlyStopping:
 
 def get_samples(target, nb_class=10, sample_index=0):
     '''
-    params:
-        target : [mnist, cifar10]
-        nb_class : number of classes
-        example_index : index of image by class
+    Get samples : original images, preprocessed images, target class, trained model
 
-    returns:
-        original_images (numpy array) : Original images, shape = (number of class, W, H, C)
-        pre_images (torch array) : Preprocessing images, shape = (number of class, C, W, H)
-        target_classes (dictionary) : keys = class index, values = class name
-        model (pytorch model) : pretrained model
+    Args:
+        target: [mnist, cifar10]
+        nb_class: number of classes
+        example_index: index of image by class
+
+    Return:
+        original_images (numpy array): Original images, shape = (number of class, W, H, C)
+        pre_images (torch array): Preprocessing images, shape = (number of class, C, W, H)
+        target_classes (dictionary): keys = class index, values = class name
+        model (pytorch model): pretrained model
     '''
 
     if target == 'mnist':
@@ -369,6 +379,9 @@ def rescale_image(images):
 
     Args:
         images : images (batch_size, C, H, W)
+
+    Return:
+        images : rescaled images (batch_size, H, W, C)
     '''
     mins = np.min(images, axis=(1,2,3)) # (batch_size, 1)
     mins = mins.reshape(mins.shape + (1,1,1,)) # (batch_size, 1, 1, 1)
@@ -381,15 +394,19 @@ def rescale_image(images):
     return images
 
 
-def calc_accuracy(model, dataset, idx2class, device='cpu'):
+def calc_accuracy(model, dataset, device='cpu'):
     '''
     Calculate accuracy 
 
     Args:
-        model : trained model
-        dataset : dataset to evaluate
-        idx2class : index and class dictionary
-        device : device to use 
+        model: trained model
+        dataset: dataset to evaluate
+        idx2class: index and class dictionary
+        device: device to use [cuda:i, cpu], i=0, ...,n 
+
+    Return:
+        total_acc: total accuracy
+        acc_indice: accuracy by class
     '''
     # ture type must be numpy array
     true = np.array(dataset.dataset.targets)
@@ -409,17 +426,72 @@ def calc_accuracy(model, dataset, idx2class, device='cpu'):
     
     pred = np.array(pred_lst)
     
+    acc_indice = []
     for idx in range(10):
         indices = indices_by_idx[idx]
         true_idx = true[indices]
         pred_idx = pred[indices]
         correct = np.sum(true_idx == pred_idx)
         acc_idx = correct / true_idx.size
-        
-        print("Class [{0:10s}] accuracy : {1:.2%}".format(idx2class[idx], acc_idx))
+        acc_indice.append(acc_idx)
         
     total_acc = np.sum(true==pred) / true.shape[0]
-    print()
-    print('Total accuracy: {0:.2%}'.format(total_acc))
     
-    return total_acc
+    return total_acc, acc_indice
+
+
+def count_params(model):
+    '''
+    Count nubmer of model parameters
+
+    Args:
+        model: model to count parameters
+
+    Return:
+        nb_params: number of model parameters
+    '''
+    nb_params = sum(np.prod(p.size()) for p in model.parameters())
+    return nb_params
+
+def acc_concat(acc_lst):
+    '''
+    concatenate total accuracy and accuracy by class
+
+    Args:
+        acc_lst: accuracy list. [total_accuracy, accuracy_by_class]
+    
+    Return:
+        acc_lst: total accuracy list
+    
+    '''
+    acc_lst[1].append(acc_lst[0])
+    return acc_lst[1]
+
+def compare_model_acc(model_lst, dataloader, model_names, device='cpu'):
+    '''
+    Comparison model accuracy
+
+    Args: 
+        model_lst: model list to compare
+        dataloader: data to evaluate
+        model_names: model names
+        device: device to use [cuda:i, cpu], i=0, ...,n
+    
+    Return:
+        acc_df: dataframe accuracy of models. (number of model, number of class)
+    '''
+    assert len(model_lst) > 1 # model list must have at least two models
+    assert len(model_lst) == len(model_names) 
+
+    acc_lst = []
+    for model in model_lst:
+        tacc, cnn_accs = calc_accuracy(model=model, dataset=dataloader, device=device)
+        acc_lst.append([tacc, cnn_accs])
+
+    acc_lst = list(map(acc_concat, acc_lst))
+
+    cols = list(dataloader.dataset.class_to_idx.keys())
+    cols.append('Total')
+    acc_df = pd.DataFrame(acc_lst, columns=cols, index=model_names).round(3)
+
+    return acc_df

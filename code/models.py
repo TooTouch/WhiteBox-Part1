@@ -51,10 +51,12 @@ class SimpleCNN(nn.Module):
         )
 
         # Attention Modules
-        if attention:
+        if attention=='CBAM':
             ch_lst = [32,64,128]
             for i in range(3):
                 self.__setattr__('cbam%d' % i, cbam.CBAM(ch_lst[i]))
+            self.cam_mlp = cam.CAM(128, 10)
+        elif attention=='CAM':
             self.cam_mlp = cam.CAM(128, 10)
 
         print('Model Complete')
