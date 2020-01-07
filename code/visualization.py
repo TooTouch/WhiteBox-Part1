@@ -117,7 +117,25 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
     plt.savefig(save_dir,dpi=kwargs['dpi'])
 
 
-def visualize_ROARnKAR(targets, methods, ratio_lst, eval_method, savedir=None, **kwargs):
+def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=None, savedir=None, **kwargs):
+    if methods==None:
+        assert attention!=None, 'If methods is None, attention should not be None'
+    elif attention==None:
+        assert methods!=None, 'If methods is None, attention should not be None'
+
+    # if attention is not None, define methods list
+    if attention!=None:
+        methods = attention
+        for i in range(len(methods)):
+            if methods[i] == 'CAM':
+                methods[i] = 'CAM_CAM'
+            elif methods[i] == 'CBAM':
+                methods[i] = 'CBAM_GC'
+            elif methods[i] == 'RAN':
+                methods[i] = 'RAN_GC'
+            elif methods[i] == 'WARN':
+                methods[i] = 'WARN_GC'
+
     # initialize
     fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
     size = (5,5) if 'size' not in kwargs.keys() else kwargs['size']
@@ -131,20 +149,32 @@ def visualize_ROARnKAR(targets, methods, ratio_lst, eval_method, savedir=None, *
     for target in targets:
         test_acc[target] = {m: [] for m in methods}
 
-    # load logs
-    for target in targets:
-        f = open('../logs/simple_cnn_{}_logs.txt'.format(target), 'r')
-        acc = json.load(f)['test_result']
-        for m in methods:
+    # load test accuracy
+    for m in methods:
+        for target in targets:
+            if ('CAM' in m) or ('CBAM' in m):
+                model_name = '{}_{}_{}'.format('simple_cnn', target,m.split('_')[0])
+            elif ('RAN' in m) or ('WARN' in m):
+                model_name = '{}_{}'.format(target, m.split('_')[0])
+            else:
+                model_name = '{}_{}'.format('simple_cnn', target)
+
+            f = open('../logs/{}_logs.txt'.format(model_name),'r')
+            acc = json.load(f)['test_result']
             test_acc[target][m].append(acc)
 
-    # load accuracy
+    # load roar/kar accuracy
     for target in targets:
         for m in methods:
-            for ratio in ratio_lst[1:]:
-                f = open('../logs/simple_cnn_{0:}_{1:}_{2:}{3:.1f}_logs.txt'.format(target, m, eval_method, ratio),'r')
-                test_acc[target][m].append(json.load(f)['test_result'])
+            if ('RAN' in m) or ('WARN' in m):
+                model_name = '{}_{}'.format(target, m)
+            else:
+                model_name = '{}_{}_{}'.format('simple_cnn', target, m)
 
+            for ratio in ratio_lst[1:]:
+                f = open('../logs/{0:}_{1:}{2:.1f}_logs.txt'.format(model_name, eval_method, ratio),'r')
+                test_acc[target][m].append(json.load(f)['test_result'])
+            
     # plotting
     f, ax = plt.subplots(1,2,figsize=size)
     for i in range(len(targets)):
