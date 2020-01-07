@@ -1,0 +1,9 @@
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.1 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.2 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.3 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.4 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.5 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.6 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.7 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.8 > print.log &
+nohup python -u ../code/main.py --eval=KAR --target=cifar10 --attention=CAM --method=CAM --ratio=0.9 > print.log &

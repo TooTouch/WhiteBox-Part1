@@ -21,7 +21,9 @@ from utils import seed_everything, ModelTrain, ModelTest
 import argparse
 
 def main(args, **kwargs):
+    #################################
     # Config
+    #################################
     epochs = args.epochs
     batch_size = args.batch_size 
     valid_rate = args.valid_rate
@@ -30,11 +32,16 @@ def main(args, **kwargs):
 
     # checkpoint
     target = args.target
+    attention = args.attention
     monitor = args.monitor
     mode = args.mode
 
     # save name
     model_name = 'simple_cnn_{}'.format(target)
+    if attention in ['CAM','CBAM']:
+        model_name = model_name + '_{}'.format(attention)
+    elif attention in ['RAN','WARN']:
+        model_name = '{}_{}'.format(target,attention)
 
     # save directory
     savedir = '../checkpoint'
@@ -44,6 +51,7 @@ def main(args, **kwargs):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('=====Setting=====')
+    print('Training: ',args.train)
     print('Epochs: ',epochs)
     print('Batch Size: ',batch_size)
     print('Validation Rate: ',valid_rate)
@@ -52,16 +60,23 @@ def main(args, **kwargs):
     print('Monitor: ',monitor)
     print('Model Name: ',model_name)
     print('Mode: ',mode)
+    print('Attention: ',attention)
     print('Save Directory: ',savedir)
     print('Log Directory: ',logdir)
     print('Device: ',device)
     print('Verbose: ',verbose)
     print()
+    print('Evaluation: ',args.eval)
+    if args.eval!=None:
+        print('Pixel ratio: ',kwargs['ratio'])
+    print()
     print('Setting Random Seed')
     print()
     seed_everything() # seed setting
     
+    #################################
     # Data Load
+    #################################
     print('=====Data Load=====')
     if target == 'mnist':
         trainloader, validloader, testloader = mnist_load(batch_size=batch_size,
@@ -73,10 +88,15 @@ def main(args, **kwargs):
                                                             validation_rate=valid_rate,
                                                             shuffle=True)
 
+    #################################
     # ROAR or KAR
+    #################################
     if (args.eval=='ROAR') or (args.eval=='KAR'):
         # saliency map load
-        hf = h5py.File(f'../saliency_maps/[{args.target}]{args.method}_train.hdf5','r')
+        filename = f'../saliency_maps/[{args.target}]{args.method}'
+        if attention in ['CBAM','RAN']:
+            filename += f'_{attention}'
+        hf = h5py.File(f'{filename}_train.hdf5','r')
         sal_maps = np.array(hf['saliencys'])
         # adjust image 
         data_lst = adjust_image(kwargs['ratio'], trainloader, sal_maps, args.eval)
@@ -85,16 +105,31 @@ def main(args, **kwargs):
         # model name
         model_name = model_name + '_{0:}_{1:}{2:.1f}'.format(args.method, args.eval, kwargs['ratio'])
     
-    print('=====Model Load=====')
+    # check exit
+    if os.path.isfile('{}/{}_logs.txt'.format(logdir, model_name)):
+        sys.exit()
+    
+    #################################
     # Load model
-    net = SimpleCNN(target).to(device)
+    #################################
+    print('=====Model Load=====')
+    if attention=='RAN':
+        net = RAN(target).to(device)
+    elif attention=='WARN':
+        net = WideResNetAttention(target).to(device)
+    else:
+        net = SimpleCNN(target, attention).to(device)
+    n_parameters = sum([np.prod(p.size()) for p in net.parameters()])
+    print('Total number of parameters:', n_parameters)
     print()
 
     # Model compile
     optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) 
     criterion = nn.CrossEntropyLoss()
 
+    #################################
     # Train
+    #################################
     modeltrain = ModelTrain(model=net,
                             data=trainloader,
                             epochs=epochs,
@@ -107,7 +142,10 @@ def main(args, **kwargs):
                             mode=mode,
                             validation=validloader,
                             verbose=verbose)
+
+    #################################
     # Test
+    #################################
     modeltest = ModelTest(model=net,
                           data=testloader,
                           loaddir=savedir,
@@ -128,6 +166,7 @@ if __name__ == '__main__':
     # Train
     parser.add_argument('--train', action='store_true', help='train mode')
     parser.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
+    parser.add_argument('--attention', type=str, default=None, choices=['CAM','CBAM','RAN','WARN'], help='attention methods')
     parser.add_argument('--epochs', type=int, default=300, help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=128, help='number of batch')
     parser.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
@@ -140,12 +179,12 @@ if __name__ == '__main__':
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
     parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet'], help='select attribution method')
     parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
-    parser.add_argument('--ratio', type=float, default=0.1, help='ratio whatever')
+    parser.add_argument('--ratio', type=float, default=0.1, help='ratio of pixel')
     args = parser.parse_args()
 
     # TODO: Tensorboard Check
 
-    # python main.py --train --target=['mnist','cifar10']
+    # python main.py --train --target=['mnist','cifar10'] --attention=['CAM','CBAM','RAN','WARN']
     if args.train:
         main(args=args)
         
