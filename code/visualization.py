@@ -332,7 +332,7 @@ def visualize_coherence_models(dataset, images, pre_images, targets, idx2classes
         img = images[i].squeeze() if dataset == 'mnist' else images[i]
     
         ax[i,0].imshow(img, color)
-        ax[i,0].set_ylabel('{0:})'.format(idx2classes[i]), size=fontsize)
+        ax[i,0].set_ylabel('{0:}'.format(idx2classes[i]), size=fontsize)
         ax[i,0].set_xticks([])
         ax[i,0].set_yticks([])
         # set title
