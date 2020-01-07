@@ -18,7 +18,7 @@ from models import SimpleCNNDeconv
 
 
 class VanillaBackprop(object):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         self.model = model 
         # evaluation mode
         self.model.eval()
@@ -72,7 +72,7 @@ class VanillaBackprop(object):
 
 
 class IntegratedGradients(object):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         self.model = model
         # evaluation mode
         self.model.eval()
@@ -149,7 +149,7 @@ class IntegratedGradients(object):
 
 
 class GuidedBackprop(object):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         self.model = model    
         # evaluation mode
         self.model.eval()
@@ -223,7 +223,7 @@ class GuidedBackprop(object):
 class GradCAM(object):
     def __init__(self, model, **kwargs):
         # seqeuntial name
-        self.seq_name = 'features' if 'seq_name' not in kwargs.keys() else kwargs.keys()
+        self.seq_name = 'features' if 'seq_name' not in kwargs.keys() else kwargs['seq_name']
         # model
         self.model = model
         # evaluation mode
@@ -334,7 +334,7 @@ class GradCAM(object):
         print('Save saliency maps')
 
 class CAM(object):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         self.model = model
         # evaluation mode
         self.model.eval()
@@ -433,7 +433,7 @@ class CAM(object):
         print('Save saliency maps')
 
 class DeconvNet(object):
-    def __init__(self, model, deconv_model):
+    def __init__(self, model, deconv_model, **kwargs):
         self.model = model
         self.deconv_model = deconv_model
 
@@ -505,9 +505,9 @@ class DeconvNet(object):
         print('Save saliency maps')
 
 class GuidedGradCAM(object):
-    def __init__(self, model):
-        self.GC_model = GradCAM(model)
-        self.GB_model = GuidedBackprop(model)
+    def __init__(self, model, **kwargs):
+        self.GC_model = GradCAM(model, **kwargs)
+        self.GB_model = GuidedBackprop(model, **kwargs)
 
     def generate_image(self, pre_imgs, targets, **kwargs):
         # default
@@ -553,8 +553,8 @@ class GuidedGradCAM(object):
 
     
 class InputBackprop(object):
-    def __init__(self, model):
-        self.VBP_model = VanillaBackprop(model)
+    def __init__(self, model, **kwargs):
+        self.VBP_model = VanillaBackprop(model, **kwargs)
 
     def generate_image(self, pre_imgs, targets, **kwargs):
         # make saliency map by VBP
