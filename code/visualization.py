@@ -174,7 +174,7 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
             for ratio in ratio_lst[1:]:
                 f = open('../logs/{0:}_{1:}{2:.1f}_logs.txt'.format(model_name, eval_method, ratio),'r')
                 test_acc[target][m].append(json.load(f)['test_result'])
-            
+
     # plotting
     f, ax = plt.subplots(1,2,figsize=size)
     for i in range(len(targets)):
