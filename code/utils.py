@@ -303,7 +303,7 @@ class EarlyStopping:
             self.best_loss = loss
 
 
-def get_samples(target, nb_class=10, sample_index=0):
+def get_samples(target, nb_class=10, sample_index=0, attention=None, device='cpu'):
     '''
     Get samples : original images, preprocessed images, target class, trained model
 
@@ -480,8 +480,8 @@ def compare_model_acc(model_lst, dataloader, model_names, device='cpu'):
     Return:
         acc_df: dataframe accuracy of models. (number of model, number of class)
     '''
-    assert len(model_lst) > 1 # model list must have at least two models
-    assert len(model_lst) == len(model_names) 
+    assert len(model_lst) > 1, 'Model list must have at least two models'
+    assert len(model_lst) == len(model_names), 'Model list must be the same length as the brist'
 
     acc_lst = []
     for model in model_lst:

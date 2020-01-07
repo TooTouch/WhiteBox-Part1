@@ -221,7 +221,10 @@ class GuidedBackprop(object):
         print('Save saliency maps')
 
 class GradCAM(object):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
+        # seqeuntial name
+        self.seq_name = 'features' if 'seq_name' not in kwargs.keys() else kwargs.keys()
+        # model
         self.model = model
         # evaluation mode
         self.model.eval()
@@ -241,7 +244,7 @@ class GradCAM(object):
         def hook_backward(module, input, output, key):
             self.gradients[key] = output[0]
 
-        for idx, layer in enumerate(self.model._modules.get('features')):
+        for idx, layer in enumerate(self.model._modules.get(self.seq_name)):
             layer.register_forward_hook(partial(hook_forward, key=idx))
             layer.register_backward_hook(partial(hook_backward, key=idx))
             
@@ -428,7 +431,7 @@ class CAM(object):
             hf.create_dataset('preds',data=preds)
             hf.close()
         print('Save saliency maps')
-        
+
 class DeconvNet(object):
     def __init__(self, model, deconv_model):
         self.model = model

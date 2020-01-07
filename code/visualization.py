@@ -221,7 +221,20 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
         plt.tight_layout()
         plt.savefig(savedir, dpi=dpi)
 
-def make_saliency_map(model, methods, attr_method_lst, name_lst):
+def make_saliency_map(dataset, model, methods, attr_method_lst, name_lst, **kwargs):
+    '''
+    Make sliency map
+
+    Args:
+        dataset: target dataset. ['mnist','cifar10']
+        model: model to apply attribution method
+        methods: attribution methods
+        attr_method_lst: saliency map list
+        name_lst: attribution method name list
+    
+    Return:
+
+    '''
     if 'VBP' in methods:
         VBP_attr = VanillaBackprop(model)
         attr_method_lst.append(VBP_attr)
@@ -242,7 +255,7 @@ def make_saliency_map(model, methods, attr_method_lst, name_lst):
     if 'GB' in methods:
         GB_attr = GuidedBackprop(model)
         attr_method_lst.append(GB_attr)
-        name_lst.append('Guided\nGradients')
+        name_lst.append('Guided\nBackprop')
     if 'GC' in methods:
         GC_attr = GradCAM(model)
         attr_method_lst.append(GC_attr)
@@ -277,13 +290,14 @@ def visualize_coherence(dataset, images, pre_images, targets, idx2classes, model
     model_names = None if 'model_names' not in kwargs.keys() else kwargs['model_names']
 
     # attribution methods
-    if isinstance(model, list):
-        for m in model
-        attr_methods, name_lst = make_saliency_map(m, methods, name_lst)
-
     attr_methods = []
     name_lst = []
-    attr_methods, name_lst = make_saliency_map(attr_methods, name_lst)
+    if isinstance(model, list):
+        for i, m in enumerate(model):
+            attr_methods, name_lst = make_saliency_map(dataset, m, methods, attr_methods, name_lst)
+            name_lst[i] = name_lst[i] + f'_{model_names[i]}'
+    else:
+        attr_methods, name_lst = make_saliency_map(dataset, model, methods, attr_methods, name_lst)
     
     # initialize results
     nb_class = 10
