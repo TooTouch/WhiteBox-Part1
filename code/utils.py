@@ -338,8 +338,20 @@ def get_samples(target, nb_class=10, sample_index=0):
         original_targets = testset.targets[idx_by_class]
 
     # model load
-    weights = torch.load('../checkpoint/simple_cnn_{}.pth'.format(target))
-    model = SimpleCNN(target)
+    filename = f'simple_cnn_{target}'
+    if attention in ['CAM','CBAM']:
+        filename += f'_{attention}'
+    elif attention in ['RAN','WARN']:
+        filename = f'{target}_{attention}'
+    print('filename: ',filename)
+    weights = torch.load(f'../checkpoint/{filename}.pth')
+
+    if attention == 'RAN':
+        model = RAN(target).to(device)
+    elif attention == 'WARN':
+        model = WideResNetAttention(target).to(device)
+    else:
+        model = SimpleCNN(target, attention).to(device)
     model.load_state_dict(weights['model'])
 
     # image preprocessing
