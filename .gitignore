@@ -124,6 +124,7 @@ saliency_maps/
 # ROAR&KAR checkpoint and log
 checkpoint/*ROAR*.pth
 checkpoint/*KAR*.pth
+checkpoint/*
 
 # nohup
 script/*.out
