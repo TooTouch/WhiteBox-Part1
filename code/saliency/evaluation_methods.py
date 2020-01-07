@@ -3,7 +3,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from model import SimpleCNN, SimpleCNNDeconv
+from models import SimpleCNN, SimpleCNNDeconv
 from dataload import mnist_load, cifar10_load
 from saliency.attribution_methods import *
 from saliency.ensembles import *

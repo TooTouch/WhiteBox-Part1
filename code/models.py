@@ -51,11 +51,11 @@ class SimpleCNN(nn.Module):
         )
 
         # Attention Modules
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        ch_lst = [32,64,128]
-        for i in range(3):
-            self.__setattr__('cbam%d' % i, cbam.CBAM(ch_lst[i]))
-        self.cam_mlp = cam.CAM(128, 10)
+        if attention:
+            ch_lst = [32,64,128]
+            for i in range(3):
+                self.__setattr__('cbam%d' % i, cbam.CBAM(ch_lst[i]))
+            self.cam_mlp = cam.CAM(128, 10)
 
         print('Model Complete')
 

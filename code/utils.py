@@ -7,7 +7,7 @@ import time
 import datetime 
 
 from dataload import mnist_load, cifar10_load
-from model import SimpleCNN
+from models import SimpleCNN, RAN, WideResNetAttention
 
 def seed_everything(seed=223):
     random.seed(seed)
@@ -381,8 +381,18 @@ def rescale_image(images):
     return images
 
 
-def calc_accuracy(model, data, true, idx2class, device='cpu'):
+def calc_accuracy(model, dataset, idx2class, device='cpu'):
+    '''
+    Calculate accuracy 
+
+    Args:
+        model : trained model
+        dataset : dataset to evaluate
+        idx2class : index and class dictionary
+        device : device to use 
+    '''
     # ture type must be numpy array
+    true = np.array(dataset.dataset.targets)
     indices_by_idx = dict((idx, np.where(true==idx)) for idx in range(10))
     
     # test
@@ -390,7 +400,7 @@ def calc_accuracy(model, data, true, idx2class, device='cpu'):
     model.eval()
     pred_lst = []
     with torch.no_grad():
-        for inputs, targets in data:
+        for inputs, targets in dataset:
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs).detach()
             

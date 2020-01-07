@@ -13,7 +13,7 @@ from collections import OrderedDict
 from functools import partial
 
 from utils import rescale_image
-from model import SimpleCNNDeconv
+from models import SimpleCNNDeconv
 
 
 

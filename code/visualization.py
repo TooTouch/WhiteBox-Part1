@@ -3,7 +3,7 @@ import numpy as np
 import json
 
 from saliency.attribution_methods import *
-from model import SimpleCNNDeconv
+from models import SimpleCNNDeconv
 
 import matplotlib.pyplot as plt
 
