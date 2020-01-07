@@ -330,7 +330,105 @@ class GradCAM(object):
             hf.close()
         print('Save saliency maps')
 
+class CAM(object):
+    def __init__(self, model):
+        self.model = model
+        # evaluation mode
+        self.model.eval()
+        # hook
+        self.hook_layers()
+        # initial dicts
+        self.conv_outputs = OrderedDict()
+    
+    def hook_layers(self):
+        def hook_forward(module, input, output, key):
+            if isinstance(module, torch.nn.MaxPool2d):
+                self.conv_outputs[key] = output[0]
+            else:
+                self.conv_outputs[key] = output
 
+        for idx, layer in enumerate(self.model._modules.get('features')):
+            layer.register_forward_hook(partial(hook_forward, key=idx))
+            
+    def generate_image(self, pre_imgs, targets, **kwargs):
+        # last layer idx
+        layer = 11 if 'layer' not in kwargs.keys() else kwargs['layer']
+        color = False if 'color' not in kwargs.keys() else kwargs['color']
+
+        # convert target type to LongTensor
+        targets = torch.LongTensor(targets)
+
+        # prediction
+        pre_imgs = Variable(pre_imgs, requires_grad=True)
+        outputs = self.model(pre_imgs)
+        probs, preds = outputs.detach().max(1)
+
+        # last layer output
+        last_layer_output = self.conv_outputs[layer].detach().numpy() # (B, C, H, W)
+
+        # w_k 
+        w_k = self.model.cam_mlp.mlp[0].weight.detach().numpy() # (nb_class, C)
+        b_w_k = np.zeros((targets.shape[0], w_k.shape[1]))
+        for i in range(targets.shape[0]):
+            b_w_k[i] = w_k[targets[i]]
+        b_w_k = b_w_k.reshape(b_w_k.shape + (1,1,)) # (B, C, 1, 1)
+
+        # b_w_k x last layer output
+        cams = (b_w_k * last_layer_output).sum(1)
+        
+        # minmax scaling * 255
+        mins = cams.min(axis=(1,2))
+        mins = mins.reshape(mins.shape + (1,1,))
+        maxs = cams.max(axis=(1,2))
+        maxs = maxs.reshape(maxs.shape + (1,1,))
+
+        cams = (cams - mins)/(maxs - mins)
+        cams = np.uint8(cams * 255)
+    
+        # resize to input image size
+        def resize_image(cam, origin_image, color):
+            img = np.uint8(Image.fromarray(cam).resize((origin_image.shape[-2:]), Image.ANTIALIAS))/255
+            if color:
+                # output_GC (H,W) to (H,W,C)
+                img = cv2.applyColorMap(np.uint8(img*255), cv2.COLORMAP_JET)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            else:
+                img = np.expand_dims(img, axis=2)
+            
+            return img
+
+        colors = [color] * cams.shape[0]
+        cams = np.array(list(map(resize_image, cams, pre_imgs, colors)))
+
+        return (cams, probs.numpy(), preds.numpy())
+
+    def save_saliency_map(self, dataloader, save_dir, **kwargs):
+        # config
+        img_size = dataloader.dataset.data.shape[1:] 
+        dim = len(img_size)
+        if dim == 2:
+            img_size = img_size + (1,)
+        
+        # initialize
+        sal_maps = np.array([], dtype=np.float32).reshape((0,) + img_size)
+        probs = np.array([], dtype=np.float32)
+        preds = np.array([], dtype=np.uint8)
+
+        # make saliency maps
+        for img_b, target_b in tqdm(dataloader, desc='CAM'):
+            sal_map_b, prob_b, pred_b = self.generate_image(img_b, target_b, **kwargs)
+            sal_maps = np.vstack([sal_maps, sal_map_b])
+            probs = np.append(probs, prob_b)
+            preds = np.append(preds, pred_b)
+
+        # save saliency maps to h5py
+        with h5py.File(save_dir, 'w') as hf:
+            hf.create_dataset('saliencys',data=sal_maps)
+            hf.create_dataset('probs',data=probs)
+            hf.create_dataset('preds',data=preds)
+            hf.close()
+        print('Save saliency maps')
+        
 class DeconvNet(object):
     def __init__(self, model, deconv_model):
         self.model = model
