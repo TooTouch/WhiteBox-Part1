@@ -167,7 +167,7 @@ if __name__ == '__main__':
     parser.add_argument('--train', action='store_true', help='train mode')
     parser.add_argument('--target', type=str, choices=['mnist','cifar10'], help='target data')
     parser.add_argument('--attention', type=str, default=None, choices=['CAM','CBAM','RAN','WARN'], help='attention methods')
-    parser.add_argument('--epochs', type=int, default=300, help='number of epochs')
+    parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=128, help='number of batch')
     parser.add_argument('--valid_rate', type=float, default=0.2, help='validation set ratio')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
