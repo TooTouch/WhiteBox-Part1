@@ -111,7 +111,7 @@ Selecticity is a method for quantitative evaluation of the attribution methods. 
 As a result, IB, GB and GB-GC were the most likely attribution methods to degrade the performance of models for the two datasets.
 
 <p align="center">
-  <img src="https://github.com/Tootouch/WhiteBox-Part1/blob/master/images/models/selectivity.PNG?raw=true" alt="selectivity" width="400"/>
+  <img src="https://github.com/Tootouch/WhiteBox-Part1/blob/master/images/models/selectivity.png?raw=true" alt="selectivity" width="400"/>
 </p>
 
 **MNIST**  
