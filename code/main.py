@@ -2,6 +2,7 @@ import numpy as np # array
 import json # history
 import os # directory
 import h5py # save files
+import sys
 
 # pytorch 
 import torch
@@ -14,7 +15,7 @@ import torchvision.models as models
 # defined function
 from saliency.evaluation_methods import Selectivity, adjust_image
 from dataload import mnist_load, cifar10_load
-from model import SimpleCNN
+from models import SimpleCNN, RAN, WideResNetAttention
 from utils import seed_everything, ModelTrain, ModelTest
 
 # arguments
@@ -99,7 +100,7 @@ def main(args, **kwargs):
         hf = h5py.File(f'{filename}_train.hdf5','r')
         sal_maps = np.array(hf['saliencys'])
         # adjust image 
-        data_lst = adjust_image(kwargs['ratio'], trainloader, sal_maps, args.eval)
+        trainloader = adjust_image(kwargs['ratio'], trainloader, sal_maps, args.eval)
         # hdf5 close
         hf.close()                     
         # model name
@@ -177,7 +178,7 @@ if __name__ == '__main__':
    
     # Evaluation
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
-    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet'], help='select attribution method')
+    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet','CO'], help='select attribution method')
     parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
     parser.add_argument('--ratio', type=float, default=0.1, help='ratio of pixel')
     args = parser.parse_args()
@@ -205,7 +206,7 @@ if __name__ == '__main__':
                                          method=args.method, 
                                          sample_pct=args.ratio)
         # evaluation
-        selectivity_method.eval(steps=args.steps, savedir='../evaluation')
+        selectivity_method.eval(steps=args.steps, save_dir='../evaluation')
 
     elif (args.eval=='ROAR') or (args.eval=='KAR'):
         # ratio

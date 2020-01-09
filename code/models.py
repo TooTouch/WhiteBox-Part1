@@ -64,9 +64,9 @@ class SimpleCNN(nn.Module):
     
     def forward(self, x):
         nb_layer = 0
-        for idx, layer in enumerate(self.features):
+        for _, layer in enumerate(self.features):
             if isinstance(layer, nn.MaxPool2d):
-                x, location = layer(x)
+                x, _ = layer(x)
             elif isinstance(layer, nn.BatchNorm2d) and (self.attention=='CBAM'): # CBAM
                 x = self.__getattr__('cbam%d' % nb_layer)(x)
                 # x = self.cbam_lst[nb_layer](x)
@@ -200,14 +200,14 @@ class RAN(nn.Module):
         elif t_depth==92:
             self.stages = nn.Sequential(
                 ran.ResidualUnit(64, 256),
-                ran.AttentionModule1(256, 128, size=size_lst, nb_skip=2),
+                ran.AttentionModule(256, 128, size=size_lst, nb_skip=2),
                 ran.ResidualUnit(128, 512, 2),
-                ran.AttentionModule2(512, 256, size=size_lst[1:], nb_skip=1),
-                ran.AttentionModule2(256, 256, size=size_lst[1:], nb_skip=1),
+                ran.AttentionModule(512, 256, size=size_lst[1:], nb_skip=1),
+                ran.AttentionModule(256, 256, size=size_lst[1:], nb_skip=1),
                 ran.ResidualUnit(256, 1024, 2),
-                ran.AttentionModule3(1024, 512, size=size_lst[2:], nb_skip=0),
-                ran.AttentionModule3(512, 512, size=size_lst[2:], nb_skip=0),
-                ran.AttentionModule3(512, 512, size=size_lst[2:], nb_skip=0)
+                ran.AttentionModule(1024, 512, size=size_lst[2:], nb_skip=0),
+                ran.AttentionModule(512, 512, size=size_lst[2:], nb_skip=0),
+                ran.AttentionModule(512, 512, size=size_lst[2:], nb_skip=0)
             )
 
         self.avgpool = nn.Sequential(

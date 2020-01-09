@@ -22,7 +22,7 @@ def generate_smooth_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     mean = [0] * pre_imgs.size(0)
     sigma = (sigma / (maxs - mins)).squeeze()
 
-    for i in range(n):
+    for _ in range(n):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
@@ -49,7 +49,7 @@ def generate_smooth_square_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     mean = [0] * pre_imgs.size(0)
     sigma = (sigma / (maxs - mins)).squeeze()
 
-    for i in range(n):
+    for _ in range(n):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
@@ -79,7 +79,7 @@ def generate_smooth_var_grad(pre_imgs, targets, n, sigma, model, **kwargs):
     mean = [0] * pre_imgs.size(0)
     sigma = (sigma / (maxs - mins)).squeeze()
 
-    for i in range(n):
+    for _ in range(n):
         noise = np.array(list(map(normal_dist, pre_imgs, mean, sigma)))
 
         noisy_imgs = pre_imgs + torch.Tensor(noise)
