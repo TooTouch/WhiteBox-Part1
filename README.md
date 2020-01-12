@@ -70,22 +70,37 @@ python main.py --eval=['ROAR','KAR'] --target=['mnist','cifar10'] --method=['VGB
 
 More information on the model architectures and learning process can be found on the notebook : [[Evaluation] - Model Performance](https://github.com/TooTouch/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Model%20Performance.ipynb)
 
+										
 | MNIST             | Number of Parameters | 0 - zero | 1 - one | 2 - two | 3 - three | 4 - four | 5 - five | 6 - six | 7 - seven | 8 - eight | 9 - nine | Total |
 | ----------------- | -------- | ------- | ------- | --------- | -------- | -------- | ------- | --------- | --------- | -------- | ----- | ----- |
-| Simple CNN        | 1284042  | 0.998   | 0.996   | 0.995     | 0.998    | 0.996    | 0.992   | 0.993     | 0.989     | 0.997    | 0.985 | 0.994 |
+| Simple CNN        | 1284042  | 0.998   | 0.995   | 0.995     | 0.995    | 0.993    | 0.990   | 0.986     | 0.989     | 0.996    | 0.985 | 0.992 |
 | Simple CNN + CAM  | 1285332  | 0.994   | 0.995   | 0.989     | 0.995    | 0.988    | 0.988   | 0.993     | 0.981     | 0.986    | 0.977 | 0.988 |
-| Simple CNN + CBAM | 1288561  | 0.998   | 0.995   | 0.992     | 0.996    | 0.990    | 0.990   | 0.990     | 0.991     | 0.995    | 0.989 | 0.993 |
+| Simple CNN + CBAM | 1288561  | 0.998   | 0.995   | 0.992     | 0.996    | 0.990    | 0.990   | 0.990     | **0.991**     | 0.995    | 0.989 | 0.993 |
 | RAN               | 27987466 | 0.997   | 0.998   | 0.996     | 0.995    | 0.989    | 0.991   | 0.996     | 0.988     | 0.994    | 0.990 | 0.994 |
+
+0.872	0.905	0.692	0.731	0.843	0.660	0.904	0.864	0.860	0.916	0.825
 
 | CIFAR10           | Number of Parameters | airplane | automobile | bird  | cat   | deer  | dog   | frog  | horse | ship  | truck | Total |
 | ----------------- | -------- | ---------- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| Simple CNN        | 2202122  | 0.884      | 0.931 | 0.773 | 0.653 | 0.875 | 0.828 | 0.902 | 0.855 | 0.920 | 0.904 | 0.852 |
-| Simple CNN + CAM  | 2203412  | 0.760      | 0.896 | 0.585 | 0.477 | 0.752 | 0.804 | 0.769 | 0.711 | 0.837 | 0.862 | 0.745 |
-| Simple CNN + CBAM | 2206641  | 0.858      | 0.945 | 0.749 | 0.685 | 0.790 | 0.761 | 0.826 | 0.798 | 0.873 | 0.896 | 0.818 |
-| RAN               | 27990666 | 0.843      | 0.882 | 0.758 | 0.701 | 0.776 | 0.586 | 0.916 | 0.844 | 0.924 | 0.873 | 0.810 |
+| Simple CNN        | 2202122  | **0.872**      | 0.905 | 0.692 | **0.731** | **0.843** | 0.660 | 0.904 | **0.864** | 0.860 | **0.916** | **0.825** |
+| Simple CNN + CAM  | 2203412  | 0.760      | 0.896 | 0.585 | 0.477 | 0.752 | **0.804** | 0.769 | 0.711 | 0.837 | 0.862 | 0.745 |
+| Simple CNN + CBAM | 2206641  | 0.858      | **0.945** | 0.749 | 0.685 | 0.790 | 0.761 | 0.826 | 0.798 | 0.873 | 0.896 | 0.818 |
+| RAN               | 27990666 | 0.843      | 0.882 | **0.758** | 0.701 | 0.776 | 0.586 | **0.916** | 0.844 | **0.924** | 0.873 | 0.810 |
 
 
 # Evaluation Results
+## Saliency maps by Layers
+<p align='center'>
+  <strong>Saliency maps by layers : CIFAR10</strong><br>
+  <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/Simple_CNN_and_CBAM_cifar10.png?raw=true" width="900"><br>
+  <i>Top : SimpleCNN / Bottom : SimpleCNN + CBAM</i>
+</p>
+
+<p align="center">
+  <strong>Saliency maps of RAN by layers : CIFAR10</strong><br>
+  <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/RAN_CO(cifar10).jpg?raw=true" width="700">
+</p>
+
 ## Coherence 
 [[Notebook](https://github.com/Tootouch/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Coherence.ipynb)]
 
@@ -99,6 +114,7 @@ Coherence is a qualitative evaluation method that shows the importance of images
 
 <p align="center">
   <strong>Saliency maps extracted by Grad-CAM for each model : MNIST & CIFAR10</strong><br>
+
   <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/coherence_mnist_comparison.jpg?raw=true" alt="mnist_coherence" width="350"/>
   <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/coherence_cifar10_comparison.jpg?raw=true" alt="mnist_coherence" width="350"/>
 </p>
