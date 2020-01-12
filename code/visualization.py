@@ -240,10 +240,9 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
     for i in range(len(targets)):
         for j in range(len(methods)):
             ax[i].plot(ratio_lst, test_acc[targets[i]][methods[j]], label=methods[j], color=color[j], marker=marker[j])
-        ax[i].set_title(f'{targets[i].upper()} {eval_method} score', size=fontsize)
-        ax[i].set_ylabel('Accuracy', size=fontsize)
-        r_k = 'remove' if eval_method=='ROAR' else 'keep'
-        ax[i].set_xlabel(f'Pixel {r_k} ratio', size=fontsize)
+        ax[i].set_title(f'{eval_method} : {targets[i].upper()}', size=fontsize)
+        ax[i].set_ylabel('Test accuracy', size=fontsize)
+        ax[i].set_xlabel(f'% of input features replaced', size=fontsize)
         ax[i].set_xlim([0,1])
         ax[i].set_ylim([0,1])
         ax[i].legend(loc='upper right')
