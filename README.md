@@ -78,7 +78,6 @@ More information on the model architectures and learning process can be found on
 | Simple CNN + CBAM | 1288561  | 0.998   | 0.995   | 0.992     | 0.996    | 0.990    | 0.990   | 0.990     | **0.991**     | 0.995    | 0.989 | 0.993 |
 | RAN               | 27987466 | 0.997   | 0.998   | 0.996     | 0.995    | 0.989    | 0.991   | 0.996     | 0.988     | 0.994    | 0.990 | 0.994 |
 
-0.872	0.905	0.692	0.731	0.843	0.660	0.904	0.864	0.860	0.916	0.825
 
 | CIFAR10           | Number of Parameters | airplane | automobile | bird  | cat   | deer  | dog   | frog  | horse | ship  | truck | Total |
 | ----------------- | -------- | ---------- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
