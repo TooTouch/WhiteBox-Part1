@@ -40,7 +40,7 @@ class ConvOutput(object):
 
     def generate_image(self, pre_imgs, targets, **kwargs):
         # default
-        layer = 8 if 'layer' not in kwargs.keys() else kwargs['layer']
+        layer = 11 if 'layer' not in kwargs.keys() else kwargs['layer']
         color = False if 'color' not in kwargs.keys() else kwargs['color']
 
         # convert target type to LongTensor
@@ -183,7 +183,7 @@ class GuidedBackprop(object):
         def relu_forward_hook_function(module, input, output):
             self.forward_relu_outputs.append(output)
 
-        for layer in self.model._module.get(self.seq_name):
+        for layer in self.model._modules.get(self.seq_name):
             if isinstance(layer, nn.ReLU):
                 layer.register_backward_hook(relu_backward_hook_function)
                 layer.register_forward_hook(relu_forward_hook_function)

@@ -168,11 +168,11 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
         if methods[i] == 'CAM':
             methods[i] = 'CAM_CAM'
         elif methods[i] == 'CBAM':
-            methods[i] = 'CBAM_GC'
+            methods[i] = 'CBAM_CO'
         elif methods[i] == 'RAN':
-            methods[i] = 'RAN_GC'
+            methods[i] = 'RAN_CO'
         elif methods[i] == 'WARN':
-            methods[i] = 'WARN_GC'
+            methods[i] = 'WARN_CO'
 
     # initialize
     fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
@@ -188,30 +188,52 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
         test_acc[target] = {m: [] for m in methods}
 
     # load test accuracy
-    for m in methods:
-        for target in targets:
-            if ('CAM' in m) or ('CBAM' in m):
-                model_name = '{}_{}_{}'.format('simple_cnn', target,m.split('_')[0])
-            elif ('RAN' in m) or ('WARN' in m):
-                model_name = '{}_{}'.format(target, m.split('_')[0])
-            else:
-                model_name = '{}_{}'.format('simple_cnn', target)
+    def get_test_acc(methods, targets, test_acc):
+        for m in methods:
+            for target in targets:
+                if ('CAM' in m) or ('CBAM' in m):
+                    model_name = '{}_{}_{}'.format('simple_cnn', target,m.split('_')[0])
+                elif ('RAN' in m) or ('WARN' in m):
+                    model_name = '{}_{}'.format(target, m.split('_')[0])
+                else:
+                    model_name = '{}_{}'.format('simple_cnn', target)
 
-            f = open('../logs/{}_logs.txt'.format(model_name),'r')
-            acc = json.load(f)['test_result']
-            test_acc[target][m].append(acc)
+                f = open('../logs/{}_logs.txt'.format(model_name),'r')
+                acc = json.load(f)['test_result']
+                test_acc[target][m].append(acc)
+        return test_acc
+
 
     # load roar/kar accuracy
-    for target in targets:
-        for m in methods:
-            if ('RAN' in m) or ('WARN' in m):
-                model_name = '{}_{}'.format(target, m)
-            else:
-                model_name = '{}_{}_{}'.format('simple_cnn', target, m)
+    def get_roar_kar_test_acc(methods, targets, test_acc):
+        for target in targets:
+            for m in methods:
+                if ('RAN' in m) or ('WARN' in m):
+                    model_name = '{}_{}'.format(target, m)
+                else:
+                    model_name = '{}_{}_{}'.format('simple_cnn', target, m)
 
-            for ratio in ratio_lst[1:]:
-                f = open('../logs/{0:}_{1:}{2:.1f}_logs.txt'.format(model_name, eval_method, ratio),'r')
-                test_acc[target][m].append(json.load(f)['test_result'])
+                for ratio in ratio_lst[1:-1]:
+                    f = open('../logs/{0:}_{1:}{2:.1f}_logs.txt'.format(model_name, eval_method, ratio),'r')
+                    test_acc[target][m].append(json.load(f)['test_result'])
+        return test_acc
+
+    # insert 0 
+    def get_0_test_acc(methods, targets, test_acc):
+        for target in targets:
+            for m in methods:
+                test_acc[target][m].append(0)
+        return test_acc
+
+    # ROAR or KAR
+    if eval_method=='ROAR':
+        test_acc = get_test_acc(methods, targets, test_acc)
+        test_acc = get_roar_kar_test_acc(methods, targets, test_acc)
+        test_acc = get_0_test_acc(methods, targets, test_acc)
+    elif eval_method=='KAR':
+        test_acc = get_0_test_acc(methods, targets, test_acc)
+        test_acc = get_roar_kar_test_acc(methods, targets, test_acc)
+        test_acc = get_test_acc(methods, targets, test_acc)
 
     # plotting
     f, ax = plt.subplots(1,2,figsize=size)
@@ -223,6 +245,7 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
         r_k = 'remove' if eval_method=='ROAR' else 'keep'
         ax[i].set_xlabel(f'Pixel {r_k} ratio', size=fontsize)
         ax[i].set_xlim([0,1])
+        ax[i].set_ylim([0,1])
         ax[i].legend(loc='upper right')
     if savedir:
         plt.tight_layout()
@@ -243,6 +266,10 @@ def make_saliency_map(dataset, model, methods, attr_method_lst, name_lst, **kwar
     Return:
 
     '''
+    if 'CO' in methods:
+        CO_attr = ConvOutput(model, **kwargs)
+        attr_method_lst.append(CO_attr)
+        name_lst.append('ConvOUtput')
     if 'VBP' in methods:
         VBP_attr = VanillaBackprop(model, **kwargs)
         attr_method_lst.append(VBP_attr)
