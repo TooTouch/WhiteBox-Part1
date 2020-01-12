@@ -112,13 +112,6 @@ Coherence is a qualitative evaluation method that shows the importance of images
   <img src="https://github.com/Tootouch/WhiteBox-Part1/blob/master/images/results/coherence_cifar10.jpg?raw=true" alt="cifar10_coherence" width="700"/>
 </p>
 
-<p align="center">
-  <strong>Saliency maps extracted by Grad-CAM for each model : MNIST & CIFAR10</strong><br>
-
-  <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/coherence_mnist_comparison.jpg?raw=true" alt="mnist_coherence" width="350"/>
-  <img src="https://github.com/TooTouch/WhiteBox-Part1/blob/master/images/results/coherence_cifar10_comparison.jpg?raw=true" alt="mnist_coherence" width="350"/>
-</p>
-
 ## Selectivity
 [[Notebook](https://github.com/Tootouch/WhiteBox-Part1/blob/master/notebook/%5BEvaluation%5D%20-%20Selectivity.ipynb)]
 
