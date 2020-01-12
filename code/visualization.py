@@ -7,7 +7,7 @@ from models import SimpleCNNDeconv
 
 import matplotlib.pyplot as plt
 
-def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, target, **kwargs):
+def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, target, row, col, savedir=None, **kwargs):
     '''
     Visualize selectivity logs
 
@@ -19,13 +19,14 @@ def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, targ
         classes: target class
         names: attribution method names
         target: target dataset. ['mnist','cifar10']
+        row : number of class
+        col : number of saliency maps
     '''
     # initialize
-    row = kwargs['row']
-    col = kwargs['col']
-    size = kwargs['size']
-    fontsize = kwargs['fontsize']
-    labelsize = kwargs['labelsize']
+    size = (col*3, row*3) if 'size' not in kwargs.keys() else kwargs['size']
+    fontsize = 10 if 'fontsize' not in kwargs.keys() else kwargs['fontsize']
+    labelsize = 10 if 'labelsize' not in kwargs.keys() else kwargs['labelsize']
+    dpi = 100 if 'dpi' not in kwargs.keys() else kwargs['dpi']
     
     if target=='mnist':
         origin_imgs= origin_imgs.squeeze()
@@ -35,7 +36,7 @@ def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, targ
     else:
         color = None
             
-    f, ax = plt.subplots(row, col, figsize=size)
+    _, ax = plt.subplots(row, col, figsize=size)
     # original images
     for i in range(row):
         ax[i,0].imshow(origin_imgs[i], color)
@@ -57,6 +58,9 @@ def visualize_saliencys(origin_imgs, results, probs, preds, classes, names, targ
 
     plt.subplots_adjust(wspace=-0.5, hspace=0)
     plt.tight_layout()
+
+    if savedir:
+        plt.savefig(savedir, dpi=dpi)
 
 
 def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs):
@@ -87,7 +91,7 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
         attr_method_dict[attr_method]['data'] = hf
 
     # Accuracy Change by Methods
-    f, ax = plt.subplots(1,len(methods)+1, figsize=size)
+    _, ax = plt.subplots(1,len(methods)+1, figsize=size)
     for i in range(len(methods)):
         method = methods[i]
         # results load
@@ -135,7 +139,7 @@ def visualize_selectivity(target, methods, steps, sample_pct, save_dir, **kwargs
     plt.tight_layout()
     
     # save
-    plt.savefig(save_dir,dpi=kwargs['dpi'])
+    plt.savefig(save_dir,dpi=dpi)
 
 
 def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=None, savedir=None, **kwargs):
@@ -299,7 +303,7 @@ def visualize_coherence_models(dataset, images, pre_images, targets, idx2classes
     for m in model_names:
         for i in range(len(methods)):
             if m == 'RAN':
-                params[n] = {'layer':3}
+                params[n] = {'layer':5}
             else:
                 params[n] = {}
             n += 1
@@ -325,7 +329,7 @@ def visualize_coherence_models(dataset, images, pre_images, targets, idx2classes
 
     # plotting
     col = nb_methods + 1 # number of attribution methods + original image
-    f, ax = plt.subplots(nb_class, col, figsize=size)
+    _, ax = plt.subplots(nb_class, col, figsize=size)
     # original images
     color = 'gray' if dataset == 'mnist' else None
     for i in range(nb_class):
