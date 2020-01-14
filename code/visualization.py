@@ -193,7 +193,7 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
             for target in targets:
                 if ('CAM' in m) or ('CBAM' in m):
                     model_name = '{}_{}_{}'.format('simple_cnn', target,m.split('_')[0])
-                elif ('RAN' in m) or ('WARN' in m):
+                elif (('RAN' in m) or ('WARN' in m)) & (m != 'RANDOM'):
                     model_name = '{}_{}'.format(target, m.split('_')[0])
                 else:
                     model_name = '{}_{}'.format('simple_cnn', target)
@@ -208,7 +208,7 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
     def get_roar_kar_test_acc(methods, targets, test_acc):
         for target in targets:
             for m in methods:
-                if ('RAN' in m) or ('WARN' in m):
+                if (('RAN' in m) or ('WARN' in m)) & (m != 'RANDOM'):
                     model_name = '{}_{}'.format(target, m)
                 else:
                     model_name = '{}_{}_{}'.format('simple_cnn', target, m)
@@ -239,7 +239,10 @@ def visualize_ROARnKAR(targets, ratio_lst, eval_method, methods=None, attention=
     f, ax = plt.subplots(1,2,figsize=size)
     for i in range(len(targets)):
         for j in range(len(methods)):
-            ax[i].plot(ratio_lst, test_acc[targets[i]][methods[j]], label=methods[j], color=color[j], marker=marker[j])
+            if methods[j] == 'RANDOM':
+                ax[i].plot(ratio_lst, test_acc[targets[i]][methods[j]], label=methods[j], color='black', linestyle='--', linewidth=3, alpha=0.5)
+            else:
+                ax[i].plot(ratio_lst, test_acc[targets[i]][methods[j]], label=methods[j], color=color[j], marker=marker[j])
         ax[i].set_title(f'{eval_method} : {targets[i].upper()}', size=fontsize)
         ax[i].set_ylabel('Test accuracy', size=fontsize)
         ax[i].set_xlabel(f'% of input features replaced', size=fontsize)

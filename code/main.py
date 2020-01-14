@@ -178,7 +178,7 @@ if __name__ == '__main__':
    
     # Evaluation
     parser.add_argument('--eval', default=None, type=str, choices=['coherence','selectivity','ROAR','KAR'], help='select evaluate methods')
-    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet','CO'], help='select attribution method')
+    parser.add_argument('--method', type=str, default=None, choices=['VBP','IB','IG','GB','GC','GBGC','DeconvNet','CO','RANDOM'], help='select attribution method')
     parser.add_argument('--steps', type=int, default=50, help='number of evaluation')
     parser.add_argument('--ratio', type=float, default=0.1, help='ratio of pixel')
     args = parser.parse_args()
