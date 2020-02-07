@@ -148,11 +148,11 @@ ROAR/KAR is a method for quantitative evaluation of the attribution methods that
 
 
 # Reference
-- [1] Wang, F., Jiang, M., Qian, C., Yang, S., Li, C., Zhang, H., ... & Tang, X. (2017). Residual attention network for image classification. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 3156-3164). [[Paper](https://arxiv.org/abs/1704.06904)]
+- [1] Woo, S., Park, J., Lee, J. Y., & So Kweon, I. (2018). Cbam: Convolutional block attention module. In Proceedings of the European Conference on Computer Vision (ECCV) (pp. 3-19). [[Paper](https://arxiv.org/abs/1807.06521)]
 
 - [2] Zhou, B., Khosla, A., Lapedriza, A., Oliva, A., & Torralba, A. (2016). Learning deep features for discriminative localization. In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 2921-2929). [[Paper](https://arxiv.org/abs/1512.04150)]
 
-- [3] Woo, S., Park, J., Lee, J. Y., & So Kweon, I. (2018). Cbam: Convolutional block attention module. In Proceedings of the European Conference on Computer Vision (ECCV) (pp. 3-19). [[Paper](https://arxiv.org/abs/1807.06521)]
+- [3] Wang, F., Jiang, M., Qian, C., Yang, S., Li, C., Zhang, H., ... & Tang, X. (2017). Residual attention network for image classification. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 3156-3164). [[Paper](https://arxiv.org/abs/1704.06904)]
 
 - [4] Rodríguez, P., Gonfaus, J. M., Cucurull, G., XavierRoca, F., & Gonzalez, J. (2018). Attend and rectify: a gated attention mechanism for fine-grained recovery. In Proceedings of the European Conference on Computer Vision (ECCV) (pp. 349-364). [[Paper](https://arxiv.org/abs/1807.07320)]
 
