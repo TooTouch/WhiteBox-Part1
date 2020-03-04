@@ -1,5 +1,7 @@
 # WhiteBox - Part1 
 
+![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FTooTouch%2FWhiteBox-Part1)
+
 The White Box Project is a project that introduces many ways to solve the part of the black box of machine learning. In this part, i've introduced and experimented with ways to interpret and evaluate models in the field of image. 
 
 I shared Korean versions for each reference to study methodology and English. Please refer to the reference.  
